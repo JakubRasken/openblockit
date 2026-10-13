@@ -2,8 +2,10 @@ package it.mirko.widget.navigation
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup.LayoutParams
 import android.view.animation.PathInterpolator
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatImageView
@@ -29,7 +31,10 @@ class AltNavigationItem @JvmOverloads constructor(
         icon = findViewById(R.id.navIcon)
         mask = findViewById(R.id.maskStats)
         container.visibility = View.INVISIBLE
+        container.layoutParams = LayoutParams(dp(55), dp(31), Gravity.CENTER)
+        container.radius = dp(16).toFloat()
         mask.translationX = -dp(24).toFloat()
+        findViewById<View?>(R.id.badge)?.visibility = View.GONE
     }
 
     fun setIcon(index: Int) {
@@ -61,7 +66,7 @@ class AltNavigationItem @JvmOverloads constructor(
         } else {
             container.visibility = View.INVISIBLE
             icon.imageTintList = android.content.res.ColorStateList.valueOf(
-                context.getColor(R.color.colorPrimaryContainer)
+                context.getColor(R.color.colorSecondaryContainer)
             )
             mask.translationX = -dp(24).toFloat()
         }

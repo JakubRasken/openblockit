@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import kotlin.math.roundToInt
@@ -14,7 +15,12 @@ class SquareNumber @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : View(context, attrs, defStyleAttr) {
 
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
 
     private var cellSize: Int = (2f * resources.displayMetrics.density).roundToInt()
     private var multiplier: Int = 2
@@ -22,25 +28,39 @@ class SquareNumber @JvmOverloads constructor(
     private var isDecMin = false
     private var isHour = false
     private var currentValue = 0
+    private var colon = false
 
-    private val masks: Map<Int, List<String>> = mapOf(
-        0 to listOf("111", "101", "101", "101", "111"),
-        1 to listOf("001", "001", "001", "001", "001"),
-        2 to listOf("111", "001", "111", "100", "111"),
-        3 to listOf("111", "001", "111", "001", "111"),
-        4 to listOf("101", "101", "111", "001", "001"),
-        5 to listOf("111", "100", "111", "001", "111"),
-        6 to listOf("111", "100", "111", "101", "111"),
-        7 to listOf("111", "001", "001", "001", "001"),
-        8 to listOf("111", "101", "111", "101", "111"),
-        9 to listOf("111", "101", "111", "001", "111"),
+    private val segments: Map<Int, List<FloatArray>> = mapOf(
+        0 to listOf(TOP, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, BOTTOM),
+        1 to listOf(TOP_RIGHT, BOTTOM_RIGHT),
+        2 to listOf(TOP, TOP_RIGHT, MIDDLE, BOTTOM_LEFT, BOTTOM),
+        3 to listOf(TOP, TOP_RIGHT, MIDDLE, BOTTOM_RIGHT, BOTTOM),
+        4 to listOf(TOP_LEFT, TOP_RIGHT, MIDDLE, BOTTOM_RIGHT),
+        5 to listOf(TOP, TOP_LEFT, MIDDLE, BOTTOM_RIGHT, BOTTOM),
+        6 to listOf(TOP, TOP_LEFT, MIDDLE, BOTTOM_LEFT, BOTTOM_RIGHT, BOTTOM),
+        7 to listOf(TOP, TOP_RIGHT, BOTTOM_RIGHT),
+        8 to listOf(TOP, TOP_LEFT, TOP_RIGHT, MIDDLE, BOTTOM_LEFT, BOTTOM_RIGHT, BOTTOM),
+        9 to listOf(TOP, TOP_LEFT, TOP_RIGHT, MIDDLE, BOTTOM_RIGHT),
     )
 
-    private var glyph: List<String> = masks[0]!!
+    private var glyph: List<FloatArray> = segments[0]!!
+
+    private val holes: Map<Int, List<FloatArray>> = mapOf(
+        0 to listOf(floatArrayOf(1f, 1f, 2f, 4f)),
+        6 to listOf(floatArrayOf(1f, 1f, 2f, 2f)),
+        8 to listOf(floatArrayOf(1f, 1f, 2f, 2f), floatArrayOf(1f, 3f, 2f, 4f)),
+        9 to listOf(floatArrayOf(1f, 3f, 2f, 4f)),
+    )
 
     fun setValue(value: Int) {
         currentValue = value % 10
-        glyph = masks[currentValue] ?: masks[0]!!
+        glyph = segments[currentValue] ?: segments[0]!!
+        colon = false
+        invalidate()
+    }
+
+    fun setColon() {
+        colon = true
         invalidate()
     }
 
@@ -52,7 +72,6 @@ class SquareNumber @JvmOverloads constructor(
     fun setSizeMultiplier(value: Int) {
         multiplier = value
         cellSize = (value * resources.displayMetrics.density).roundToInt()
-        
         requestLayout()
         invalidate()
     }
@@ -79,24 +98,84 @@ class SquareNumber @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val cellW = width / 3f - CELL_GAP
-        val cellH = cellW * CELL_ASPECT
-        val radius = cellW * 0.14f
-        val offsetX = (width - cellW * 3 - CELL_GAP * 2) / 2f
-        val offsetY = (height - cellH * glyph.size - CELL_GAP * (glyph.size - 1)) / 2f
-        glyph.forEachIndexed { row, line ->
-            line.forEachIndexed { col, ch ->
-                if (ch == '1') {
-                    val left = offsetX + col * (cellW + CELL_GAP)
-                    val top = offsetY + row * (cellH + CELL_GAP)
-                    canvas.drawRoundRect(left, top, left + cellW, top + cellH, radius, radius, paint)
-                }
-            }
+        val cell = cellSize.toFloat()
+        if (cell <= 0f) return
+        paint.style = Paint.Style.FILL
+
+        val inkWidth = cell * 3f
+        val inkHeight = cell * 5f
+        val originX = (width - inkWidth) / 2f
+        val originY = (height - inkHeight) / 2f
+
+        if (colon) {
+            val dot = cell * 0.94f
+            canvas.drawRect(originX + cell, originY + cell * 1.15f, originX + cell + dot, originY + cell * 1.15f + dot, paint)
+            canvas.drawRect(originX + cell, originY + cell * 3.05f, originX + cell + dot, originY + cell * 3.05f + dot, paint)
+            return
         }
+
+        val path = glyphPath(originX, originY, cell)
+        canvas.drawPath(path, paint)
+    }
+
+    private fun glyphPath(originX: Float, originY: Float, cell: Float): android.graphics.Path {
+        val path = android.graphics.Path()
+        val radius = cell * 0.22f
+
+        fun rect(x1: Int, y1: Int, x2: Int, y2: Int) {
+            val piece = android.graphics.Path()
+            piece.addRect(
+                originX + x1 * cell,
+                originY + y1 * cell,
+                originX + x2 * cell,
+                originY + y2 * cell,
+                android.graphics.Path.Direction.CW,
+            )
+            path.op(piece, android.graphics.Path.Op.UNION)
+        }
+
+        fun rounded(x1: Int, y1: Int, x2: Int, y2: Int) {
+            val piece = android.graphics.Path()
+            piece.addRoundRect(
+                RectF(originX + x1 * cell, originY + y1 * cell, originX + x2 * cell, originY + y2 * cell),
+                radius,
+                radius,
+                android.graphics.Path.Direction.CW,
+            )
+            path.op(piece, android.graphics.Path.Op.UNION)
+        }
+
+        glyph.forEach { segment ->
+            val x1 = segment[0].toInt()
+            val y1 = segment[1].toInt()
+            val x2 = segment[2].toInt()
+            val y2 = segment[3].toInt()
+            if (y1 == y2) rounded(0, y1, 3, y1 + 1) else rounded(x1, y1, x1 + 1, y2)
+        }
+
+        holes[currentValue]?.forEach { hole ->
+            val cut = android.graphics.Path()
+            cut.addRect(
+                originX + hole[0] * cell,
+                originY + hole[1] * cell,
+                originX + hole[2] * cell,
+                originY + hole[3] * cell,
+                android.graphics.Path.Direction.CW,
+            )
+            path.op(cut, android.graphics.Path.Op.DIFFERENCE)
+        }
+        return path
     }
 
     private companion object {
         const val CELL_ASPECT = 1.0f
-        const val CELL_GAP = 2f
+
+        val TOP = floatArrayOf(0f, 0f, 2f, 0f)
+        val TOP_LEFT = floatArrayOf(0f, 0f, 0f, 2f)
+        val TOP_RIGHT = floatArrayOf(2f, 0f, 2f, 2f)
+        val MIDDLE = floatArrayOf(0f, 2f, 2f, 2f)
+        val BOTTOM_LEFT = floatArrayOf(0f, 2f, 0f, 4f)
+        val BOTTOM_RIGHT = floatArrayOf(2f, 2f, 2f, 4f)
+        val BOTTOM = floatArrayOf(0f, 4f, 2f, 4f)
     }
 }

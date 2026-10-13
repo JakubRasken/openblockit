@@ -25,7 +25,7 @@ class HapticSlider @JvmOverloads constructor(
         color = context.getColor(R.color.colorPrimaryContainer)
     }
 
-    private val spacing: Float = 9f * resources.displayMetrics.density
+    private val spacing: Float = 7.5f * resources.displayMetrics.density
     private var downY = 0f
     private var accumulated = 0f
     private var active = false
@@ -88,16 +88,15 @@ class HapticSlider @JvmOverloads constructor(
         val inset = paddingTop.coerceAtLeast(8)
         val lineW = width * 0.5f
         val startX = (width - lineW) / 2f
-        val scroll = minutesCount * spacing / 6f
-        var y = height / 2f - (scroll % spacing)
-        while (y > inset) {
-            if (y < height - inset) {
+        val scroll = (minutesCount * spacing / 6f) % spacing
+        var y = inset - scroll
+        while (y < height - inset) {
+            if (y > inset) {
                 canvas.drawLine(startX, y, startX + lineW, y, linePaint)
             }
-            y -= spacing
+            y += spacing
         }
-        accentPaint.color = if (accentActive) context.getColor(R.color.colorPrimaryContainer)
-        else context.getColor(R.color.colorPrimaryContainer)
+        accentPaint.color = context.getColor(R.color.colorPrimaryContainer)
         val barH = 6f * resources.displayMetrics.density
         canvas.drawRoundRect(
             width * 0.25f,

@@ -26,14 +26,22 @@ class AltNavigationBar @JvmOverloads constructor(
     private var suppressCallback = false
 
     init {
+        clipChildren = false
+        clipToPadding = false
+        row.clipChildren = false
+        row.clipToPadding = false
+        row.setPadding(dp(6), 0, dp(6), 0)
+        row.minimumWidth = dp(225)
         addView(row)
         for (i in 0 until 4) {
             val item = AltNavigationItem(context)
+            item.clipChildren = false
+            item.clipToPadding = false
             item.menuId = i
             item.setIcon(i)
             item.setOnClickListener { select(i) }
             items.add(item)
-            row.addView(item, LinearLayout.LayoutParams(dp(36), dp(48)))
+            row.addView(item, LinearLayout.LayoutParams(dp(48), dp(64)))
         }
     }
 

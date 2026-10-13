@@ -159,6 +159,9 @@ class MainActivity : AppCompatActivity() {
         minuteLeft = findViewById(R.id.minuteLeft)
         minuteRight = findViewById(R.id.minuteRight)
         separator = findViewById(R.id.timerSeparator)
+        separator.setColon()
+        val digitColor = getColor(R.color.colorOnSurface)
+        listOf(hourLeft, hourRight, minuteLeft, minuteRight, separator).forEach { it.setTextColor(digitColor) }
         customValue = findViewById(R.id.starValue)
         wheel = findViewById(R.id.wheel)
         sessionMiddle = findViewById(R.id.sessionMiddle)
@@ -422,11 +425,6 @@ class MainActivity : AppCompatActivity() {
         glass.post { adjustTimerSize(glass) }
         findViewById<View>(R.id.appBarLayout)?.setPadding(0, 0, 0, 0)
         (sessionMiddle as? SquareContainer)?.setRatio(0.86f)
-        val navContainer = findViewById<View>(R.id.altNavBarContainer)
-        navContainer.layoutParams?.let {
-            it.height = dp(87)
-            navContainer.layoutParams = it
-        }
         val screen = findViewById<View>(R.id.screen)
         (screen.layoutParams as? android.widget.LinearLayout.LayoutParams)?.let {
             it.weight = 0f
