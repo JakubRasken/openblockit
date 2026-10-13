@@ -23,6 +23,7 @@ class HapticPreset @JvmOverloads constructor(
         numberView = view.findViewById(R.id.presetTextNumber)
         labelView = view.findViewById(R.id.presetTextLabel)
         numberView.setTextColor(context.getColor(R.color.colorSecondaryContainer))
+        setCardBackgroundColor(context.getColor(R.color.colorSurfaceBright))
         addView(view)
     }
 
