@@ -26,4 +26,5 @@
     <color name="widget_primary_container">#F47442</color>
     <color name="widget_tile_quiet">#272320</color>
     <color name="widget_on_primary_container">#1B110D</color>
+    <color name="block_tile">#1E1C1A</color>
 </resources>

@@ -31,4 +31,5 @@
     <color name="widget_primary_container">#F55314</color>
     <color name="widget_tile_quiet">#DBDBDB</color>
     <color name="widget_on_primary_container">#FBF1EC</color>
+    <color name="block_tile">#1E1C1A</color>
 </resources>

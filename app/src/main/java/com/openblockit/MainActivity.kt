@@ -1,11 +1,17 @@
 package com.openblockit
 
+import android.animation.ArgbEvaluator
+import android.animation.ValueAnimator
 import android.app.AlertDialog
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.MotionEvent
 import android.view.View
+import android.view.animation.LinearInterpolator
+import android.view.animation.PathInterpolator
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -30,6 +36,7 @@ import it.mirko.widget.PowerTiles
 import it.mirko.widget.RombiKnob
 import it.mirko.widget.SledSwitch
 import it.mirko.widget.SlideToStart
+import it.mirko.widget.SquareContainer
 import it.mirko.widget.SwipeSections
 import it.mirko.widget.TimelineBar
 import it.mirko.widget.display.TileDisplay
@@ -42,17 +49,28 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var root: SwipeSections
     private lateinit var nav: AltNavigationBar
+    private lateinit var navContainer: View
     private lateinit var slide: SlideToStart
     private lateinit var wheel: HapticSlider
     private lateinit var hourLeft: SquareNumber
     private lateinit var hourRight: SquareNumber
     private lateinit var minuteLeft: SquareNumber
     private lateinit var minuteRight: SquareNumber
+    private lateinit var separator: SquareNumber
     private lateinit var customValue: TextView
+    private lateinit var sessionMiddle: View
+    private lateinit var blockMiddle: View
+    private lateinit var blockValigia: View
+    private lateinit var extendBox: View
 
     private val handler = Handler(Looper.getMainLooper())
     private var selectedMinutes = 30
     private var blockMode = false
+    private var extendedMinutes = 0
+
+    private val standard = PathInterpolator(0.2f, 0f, 0f, 1f)
+    private val emphasized = PathInterpolator(0.05f, 0.7f, 0.1f, 1f)
+    private val accelerate = PathInterpolator(0.3f, 0f, 0.8f, 0.15f)
 
     private val ticker = object : Runnable {
         override fun run() {
@@ -62,6 +80,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val extendHoldAnimator by lazy { ValueAnimator.ofFloat(0f, 1f) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!Prefs.onboardingDone) {
@@ -70,7 +90,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
         setContentView(R.layout._activity_home)
-        selectedMinutes = Prefs.lastMinutes.coerceIn(5, 720)
+        selectedMinutes = Prefs.lastMinutes.coerceIn(1, 720)
+        extendedMinutes = Prefs.main.getInt("extended_minutes", 0)
         hidePremium()
         bindToolbar()
         bindSession()
@@ -78,8 +99,10 @@ class MainActivity : AppCompatActivity() {
         bindControl()
         bindBag()
         bindStats()
-        refreshIdle()
-        if (SessionManager.started()) enterBlockMode()
+        applySessionMetrics()
+        updateTimer(selectedMinutes)
+        renderCustom()
+        if (SessionManager.started()) enterBlockMode(animate = false)
         if (intent?.getBooleanExtra("completed", false) == true) showCompletion()
     }
 
@@ -90,8 +113,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (SessionManager.started() && !blockMode) enterBlockMode()
-        if (!SessionManager.started() && blockMode) exitBlockMode()
+        if (SessionManager.started() && !blockMode) enterBlockMode(animate = false)
+        if (!SessionManager.started() && blockMode) exitBlockMode(animate = false)
         bindControl()
         bindBag()
     }
@@ -129,76 +152,144 @@ class MainActivity : AppCompatActivity() {
         hourRight = findViewById(R.id.hourRight)
         minuteLeft = findViewById(R.id.minuteLeft)
         minuteRight = findViewById(R.id.minuteRight)
+        separator = findViewById(R.id.timerSeparator)
         customValue = findViewById(R.id.starValue)
         wheel = findViewById(R.id.wheel)
+        sessionMiddle = findViewById(R.id.sessionMiddle)
+        blockMiddle = findViewById(R.id.blockMiddle)
+        blockValigia = findViewById(R.id.blockValigia)
+        extendBox = findViewById(R.id.extendBox)
 
-        listOf(hourLeft, hourRight, minuteLeft, minuteRight, findViewById<SquareNumber>(R.id.timerSeparator))
-            .forEach { it.setSizeMultiplier(5) }
-        minuteLeft.alpha = 0.7f
-        minuteRight.alpha = 0.7f
-        findViewById<View>(R.id.timerSeparator).alpha = 0.7f
-
-        wheel.setRange(5, 720)
-        wheel.setValue(selectedMinutes)
-        wheel.onValueChanged = { value ->
-            selectedMinutes = value
-            Prefs.lastMinutes = value
-            updateTimer(value / 60, value % 60)
+        wheel.setLimitMin(1)
+        wheel.setLimitMax(720)
+        wheel.setMinutes(selectedMinutes)
+        wheel.onMinutesChanged = { minutes ->
+            selectedMinutes = minutes
+            Prefs.lastMinutes = minutes
+            updateTimer(minutes)
             renderCustom()
+            accentCustomCard()
+        }
+        wheel.onTimePicked = {
+            Prefs.lastMinutes = wheel.minutesCount
         }
 
         findViewById<HapticPreset>(R.id.preset_fifteen_minutes).apply {
             setMinutes(15)
-            setOnClickListener { chooseMinutes(15) }
+            setOnClickListener { exitCustomMode(); animateWheelTo(15) }
         }
         findViewById<HapticPreset>(R.id.preset_thirty_minutes).apply {
             setMinutes(45)
-            setOnClickListener { chooseMinutes(45) }
+            setOnClickListener { exitCustomMode(); animateWheelTo(45) }
+        }
+        findViewById<HapticPreset>(R.id.preset_one_hour).apply {
+            setMinutes(90)
+            setOnClickListener { exitCustomMode(); animateWheelTo(90) }
+        }
+        findViewById<HapticPreset>(R.id.preset_two_hours).apply {
+            setMinutes(120)
+            setOnClickListener { exitCustomMode(); animateWheelTo(120) }
         }
         findViewById<HapticPreset>(R.id.preset_three_hours).apply {
             setMinutes(180)
-            setOnClickListener { chooseMinutes(180) }
+            setOnClickListener { exitCustomMode(); animateWheelTo(180) }
         }
         findViewById<View>(R.id.preset_custom).setOnClickListener {
-            selectedMinutes = wheel.value
-            Prefs.lastMinutes = selectedMinutes
-            updateTimer(selectedMinutes / 60, selectedMinutes % 60)
-        }
-        findViewById<View>(R.id.starLabel).setOnClickListener {
-            selectedMinutes = wheel.value
-            updateTimer(selectedMinutes / 60, selectedMinutes % 60)
+            enterCustomMode()
         }
 
         findViewById<View>(R.id.sliderUp).setOnClickListener {
-            wheel.setValue((selectedMinutes + 5).coerceAtMost(720))
-            selectedMinutes = wheel.value
-            Prefs.lastMinutes = selectedMinutes
-            updateTimer(selectedMinutes / 60, selectedMinutes % 60)
-            renderCustom()
+            wheel.setMinutesAnimate((wheel.minutesCount + 5).coerceAtMost(720))
         }
         findViewById<View>(R.id.sliderDown).setOnClickListener {
-            wheel.setValue((selectedMinutes - 5).coerceAtLeast(5))
-            selectedMinutes = wheel.value
-            Prefs.lastMinutes = selectedMinutes
-            updateTimer(selectedMinutes / 60, selectedMinutes % 60)
-            renderCustom()
+            wheel.setMinutesAnimate((wheel.minutesCount - 5).coerceAtLeast(1))
         }
 
         slide = findViewById(R.id.slideToStart)
+        slide.setHintFadeFast(true)
+        slide.reset()
         slide.setOnSlideCompleteListener { startSession() }
+        slide.setParachuteDeniedListener {
+            Toast.makeText(this, R.string.parachute_required_long, Toast.LENGTH_LONG).show()
+        }
 
         findViewById<View>(R.id.fab).setOnClickListener { startSession() }
+        findViewById<View>(R.id.parachuteBox).setOnClickListener { selectSection(3) }
+        bindExtendHold()
+        bindSoundBox()
+        bindValigia()
+    }
 
-        findViewById<View>(R.id.extendBox).setOnClickListener {
-            if (SessionManager.extend(15)) updateBlockTiles()
+    private fun bindExtendHold() {
+        val segIds = listOf(R.id.extendSeg0, R.id.extendSeg1, R.id.extendSeg2, R.id.extendSeg3)
+        val normal = getColor(R.color.colorSurfaceBright)
+        val active = getColor(R.color.colorPrimaryContainer)
+
+        fun renderSegments() {
+            val lit = extendedMinutes / 15
+            segIds.forEachIndexed { index, id ->
+                findViewById<View?>(id)?.backgroundTintList =
+                    android.content.res.ColorStateList.valueOf(if (index < lit) active else normal)
+            }
         }
+        renderSegments()
+
+        extendHoldAnimator.apply {
+            duration = 650L
+            interpolator = LinearInterpolator()
+            removeAllUpdateListeners()
+            addUpdateListener { animator ->
+                val fraction = animator.animatedValue as Float
+                if (extendBox is com.google.android.material.card.MaterialCardView) {
+                    (extendBox as com.google.android.material.card.MaterialCardView).setCardBackgroundColor(
+                        ArgbEvaluator().evaluate(fraction, getColor(R.color.block_tile), getColor(R.color.colorPrimaryContainer)) as Int
+                    )
+                }
+            }
+        }
+        extendBox.setOnTouchListener { _, event ->
+            if (!blockMode) return@setOnTouchListener false
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    if (extendedMinutes >= 60) {
+                        Toast.makeText(this, R.string.countdown_extend_need_parachute, Toast.LENGTH_SHORT).show()
+                        return@setOnTouchListener true
+                    }
+                    extendHoldAnimator.start()
+                    return@setOnTouchListener true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    if (extendHoldAnimator.isRunning) {
+                        val fraction = extendHoldAnimator.animatedValue as Float
+                        extendHoldAnimator.cancel()
+                        if (fraction >= 0.95f) {
+                            SessionManager.extend(15)
+                            extendedMinutes += 15
+                            Prefs.main.edit().putInt("extended_minutes", extendedMinutes).apply()
+                            renderSegments()
+                            updateBlockTiles()
+                        }
+                    }
+                    if (extendBox is com.google.android.material.card.MaterialCardView) {
+                        (extendBox as com.google.android.material.card.MaterialCardView).setCardBackgroundColor(getColor(R.color.block_tile))
+                    }
+                    return@setOnTouchListener true
+                }
+            }
+            false
+        }
+    }
+
+    private fun bindSoundBox() {
         findViewById<View>(R.id.soundBox).setOnClickListener {
             val next = (Prefs.soundMode + 1) % 5
             Prefs.soundMode = next
             com.openblockit.core.Sounds.start(this, next)
+            val host = findViewById<View>(R.id.soundEqHost)
+            host.animate().cancel()
+            host.translationX = dp(-4).toFloat()
+            host.animate().translationX(0f).setDuration(120L).setInterpolator(standard).start()
         }
-        findViewById<View>(R.id.parachuteBox).setOnClickListener { selectSection(3) }
-        bindValigia()
     }
 
     private fun bindValigia() {
@@ -234,6 +325,7 @@ class MainActivity : AppCompatActivity() {
     private fun bindNav() {
         root = findViewById(R.id.homeRoot)
         nav = findViewById(R.id.altNavigation)
+        navContainer = findViewById(R.id.altNavBarContainer)
         root.attachSections(
             listOf(
                 findViewById(R.id.sessionFrame),
@@ -266,44 +358,120 @@ class MainActivity : AppCompatActivity() {
         nav.setSelectedItemAnim(navIndex)
     }
 
-    private fun chooseMinutes(minutes: Int) {
-        selectedMinutes = minutes
+    private fun enterCustomMode() {
+        wheel.setLimitMin(180)
+        val custom = Prefs.customMinutes.coerceAtLeast(180)
+        wheel.setMinutesAnimate(custom)
+        findViewById<View>(R.id.preset_custom).alpha = 1f
+    }
+
+    private fun exitCustomMode() {
+        wheel.setLimitMin(1)
+        findViewById<View>(R.id.preset_custom).alpha = 0.5f
+    }
+
+    private fun animateWheelTo(minutes: Int) {
+        wheel.setMinutesAnimate(minutes)
         Prefs.lastMinutes = minutes
-        wheel.setValue(minutes)
-        updateTimer(minutes / 60, minutes % 60)
-        renderCustom()
+    }
+
+    private fun updateTimer(minutes: Int) {
+        val hours = (minutes / 60).coerceAtMost(99)
+        hourLeft.setValue(hours / 10)
+        hourRight.setValue(hours % 10)
+        minuteLeft.setValue((minutes % 60) / 10)
+        minuteRight.setValue(minutes % 10)
     }
 
     private fun renderCustom() {
         customValue.text = "%02d:%02d".format(selectedMinutes / 60, selectedMinutes % 60)
     }
 
-    private fun updateTimer(hours: Int, minutes: Int) {
-        hourLeft.setValue(hours / 10)
-        hourRight.setValue(hours % 10)
-        minuteLeft.setValue(minutes / 10)
-        minuteRight.setValue(minutes % 10)
+    private fun accentCustomCard() {
+        val card = findViewById<View?>(R.id.preset_custom) ?: return
+        if (card !is com.google.android.material.card.MaterialCardView) return
+        val value = selectedMinutes
+        val progress = if (value <= 180) 1f else 0f
+        card.setCardBackgroundColor(
+            ArgbEvaluator().evaluate(
+                progress,
+                getColor(R.color.colorSurfaceVariant),
+                getColor(R.color.colorPrimaryContainer),
+            ) as Int
+        )
     }
 
-    private fun refreshIdle() {
-        updateTimer(selectedMinutes / 60, selectedMinutes % 60)
-        renderCustom()
+    private fun applySessionMetrics() {
+        val glass = findViewById<View>(R.id.timerGlass)
+        glass.post {
+            adjustTimerSize(glass)
+            val middle = findViewById<View>(R.id.middleHost)
+            middle.post {
+                val minSide = minOf(resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels).toFloat()
+                if (middle.height > 0 && minSide > 0) {
+                    val ratio = (middle.height / minSide).coerceIn(0.55f, 1.0f)
+                    (sessionMiddle as? SquareContainer)?.setRatio(ratio)
+                }
+            }
+        }
+    }
+
+    private fun adjustTimerSize(glass: View) {
+        val density = resources.displayMetrics.density
+        val byWidth = (glass.width - 16f * density - 12f * density) / 34f
+        val byHeight = (glass.height - 8f * density) / 5f
+        val cellPx = minOf(byWidth, byHeight)
+        val multiplier = (cellPx / density).toInt().coerceAtLeast(4)
+        listOf(hourLeft, hourRight, minuteLeft, minuteRight, separator).forEach { it.setSizeMultiplier(multiplier) }
+        val spaceWidth = (multiplier * density).toInt()
+        (findViewById<View>(R.id.spaceHour).layoutParams).apply { width = spaceWidth }
+        (findViewById<View>(R.id.spaceMinutes).layoutParams).apply { width = spaceWidth }
+        findViewById<SquareNumber>(R.id.secLeft).setSizeMultiplier(10)
+        findViewById<SquareNumber>(R.id.secRight).setSizeMultiplier(10)
     }
 
     private fun startSession() {
         when (SessionManager.start(selectedMinutes)) {
-            StartResult.Started -> enterBlockMode()
-            StartResult.AlreadyRunning -> enterBlockMode()
+            StartResult.Started -> enterBlockMode(animate = true)
+            StartResult.AlreadyRunning -> enterBlockMode(animate = false)
             StartResult.NeedsParachute ->
                 Toast.makeText(this, R.string.parachute_required_long, Toast.LENGTH_LONG).show()
         }
     }
 
-    private fun enterBlockMode() {
+    private fun enterBlockMode(animate: Boolean) {
+        if (blockMode) {
+            updateBlockTiles()
+            return
+        }
         blockMode = true
-        findViewById<View>(R.id.sessionMiddle).visibility = View.GONE
-        findViewById<View>(R.id.blockMiddle).visibility = View.VISIBLE
-        findViewById<View>(R.id.blockValigia).visibility = View.VISIBLE
+        extendedMinutes = Prefs.main.getInt("extended_minutes", 0)
+        val width = resources.displayMetrics.widthPixels.toFloat()
+
+        if (animate) {
+            sessionMiddle.animate().translationX(width).setDuration(340L)
+                .setInterpolator(standard).withEndAction {
+                    sessionMiddle.visibility = View.GONE
+                    sessionMiddle.translationX = 0f
+                }.start()
+            blockMiddle.visibility = View.VISIBLE
+            blockMiddle.translationX = -width
+            blockMiddle.animate().translationX(0f).setDuration(340L)
+                .setInterpolator(standard).start()
+            navContainer.animate().translationY(dp(120).toFloat()).setDuration(280L)
+                .setInterpolator(accelerate).start()
+            blockValigia.visibility = View.VISIBLE
+            blockValigia.translationY = dp(400).toFloat()
+            blockValigia.animate().translationY(0f).setDuration(280L)
+                .setInterpolator(accelerate).start()
+        } else {
+            sessionMiddle.visibility = View.GONE
+            blockMiddle.visibility = View.VISIBLE
+            blockMiddle.translationX = 0f
+            navContainer.translationY = dp(120).toFloat()
+            blockValigia.visibility = View.VISIBLE
+            blockValigia.translationY = 0f
+        }
         slide.armExit()
         slide.setOnSlideCompleteListener { confirmParachute() }
         updateBlockTiles()
@@ -311,36 +479,63 @@ class MainActivity : AppCompatActivity() {
         handler.post(ticker)
     }
 
-    private fun exitBlockMode() {
+    private fun exitBlockMode(animate: Boolean) {
+        if (!blockMode) return
         blockMode = false
         handler.removeCallbacks(ticker)
-        findViewById<View>(R.id.sessionMiddle).visibility = View.VISIBLE
-        findViewById<View>(R.id.blockMiddle).visibility = View.GONE
-        findViewById<View>(R.id.blockValigia).visibility = View.GONE
+        val width = resources.displayMetrics.widthPixels.toFloat()
+
+        if (animate) {
+            blockMiddle.animate().translationX(-width).setDuration(340L)
+                .setInterpolator(standard).withEndAction {
+                    blockMiddle.visibility = View.GONE
+                    blockMiddle.translationX = 0f
+                }.start()
+            sessionMiddle.visibility = View.VISIBLE
+            sessionMiddle.translationX = width
+            sessionMiddle.animate().translationX(0f).setDuration(340L)
+                .setInterpolator(standard).start()
+            navContainer.animate().translationY(0f).setStartDelay(340L)
+                .setDuration(300L).setInterpolator(emphasized).start()
+            blockValigia.animate().translationY(dp(400).toFloat()).setDuration(280L)
+                .setInterpolator(accelerate).withEndAction {
+                    blockValigia.visibility = View.GONE
+                    blockValigia.translationY = 0f
+                }.start()
+        } else {
+            blockMiddle.visibility = View.GONE
+            sessionMiddle.visibility = View.VISIBLE
+            sessionMiddle.translationX = 0f
+            navContainer.translationY = 0f
+            blockValigia.visibility = View.GONE
+        }
+        slide.disarm()
         slide.reset()
         slide.setHint(R.string.slide_to_start, R.drawable.ic_play)
         slide.setOnSlideCompleteListener { startSession() }
-        refreshIdle()
         findViewById<TextView>(R.id.toolbarChuteCount).text = Prefs.parachuteCount.toString()
     }
 
     private fun updateBlockTiles() {
         val secondsLeft = SessionManager.secondsRemaining()
         if (secondsLeft <= 0) {
-            if (blockMode) exitBlockMode()
+            if (blockMode) exitBlockMode(animate = true)
             return
         }
-        findViewById<SquareNumber>(R.id.secLeft).apply {
-            setSizeMultiplier(5)
-            setValue((secondsLeft % 60) / 10)
-        }
-        findViewById<SquareNumber>(R.id.secRight).apply {
-            setSizeMultiplier(5)
-            setValue(secondsLeft % 10)
-        }
+        findViewById<SquareNumber>(R.id.secLeft).setValue((secondsLeft % 60) / 10)
+        findViewById<SquareNumber>(R.id.secRight).setValue(secondsLeft % 10)
         findViewById<TextView>(R.id.endTimeValue).text =
             endTimeLabel(System.currentTimeMillis() + secondsLeft * 1000L)
-        findViewById<TextView>(R.id.blockParachuteCount).text = Prefs.parachuteCount.toString()
+        val parachutes = Prefs.parachuteCount
+        findViewById<TextView>(R.id.blockParachuteCount).apply {
+            text = parachutes.toString()
+            alpha = if (parachutes > 0) 1f else 0.4f
+        }
+        (findViewById<View?>(R.id.parachuteBox) as? com.google.android.material.card.MaterialCardView)?.setCardBackgroundColor(
+            if (parachutes > 0) getColor(R.color.colorPrimaryContainer) else getColor(R.color.block_tile)
+        )
+        (findViewById<View?>(R.id.parachuteToken) as? com.google.android.material.card.MaterialCardView)?.alpha =
+            if (parachutes > 0) 1f else 0.4f
     }
 
     private fun bindControl() {
@@ -471,9 +666,7 @@ class MainActivity : AppCompatActivity() {
             val pkg = apps.getOrNull(index)
             val icon = findViewById<ImageView>(iconIds[index])
             icon.setImageDrawable(if (pkg != null) BagRepo.iconFor(pkg) else null)
-            findViewById<View>(slotId).setOnClickListener {
-                showAppPicker(Prefs.activeBag)
-            }
+            findViewById<View>(slotId).setOnClickListener { showAppPicker(Prefs.activeBag) }
         }
     }
 
@@ -509,7 +702,7 @@ class MainActivity : AppCompatActivity() {
             .setMessage(getString(R.string.countdown_parachute_explain))
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 SessionManager.endByParachute()
-                exitBlockMode()
+                exitBlockMode(animate = true)
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
@@ -522,4 +715,6 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton(R.string.complete_session_completed_action, null)
             .show()
     }
+
+    private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 }

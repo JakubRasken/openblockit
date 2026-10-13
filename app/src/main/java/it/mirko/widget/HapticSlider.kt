@@ -1,10 +1,12 @@
 package it.mirko.widget
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.animation.PathInterpolator
 import com.google.android.material.card.MaterialCardView
 import com.openblockit.R
 
@@ -23,26 +25,59 @@ class HapticSlider @JvmOverloads constructor(
         color = context.getColor(R.color.colorPrimaryContainer)
     }
 
-    private val spacing: Float = 14f * resources.displayMetrics.density
+    private val spacing: Float = 9f * resources.displayMetrics.density
+    private var downY = 0f
     private var accumulated = 0f
-    private var lastY = 0f
     private var active = false
+    private var accentActive = false
 
-    var minValue = 5
+    var minValue = 1
     var maxValue = 720
-    var step = 5
-    var value = 30
+    var minutesCount = 30
         private set
-    var onValueChanged: ((Int) -> Unit)? = null
 
-    fun setValue(newValue: Int) {
-        value = newValue.coerceIn(minValue, maxValue)
+    var onMinutesChanged: ((Int) -> Unit)? = null
+    var onTimePicked: (() -> Unit)? = null
+
+    private val emphasized = PathInterpolator(0.05f, 0.7f, 0.1f, 1f)
+
+    fun setLimitMin(value: Int) {
+        minValue = value
+        if (minutesCount < minValue) setMinutes(minValue)
+    }
+
+    fun setLimitMax(value: Int) {
+        maxValue = value
+        if (minutesCount > maxValue) setMinutes(maxValue)
+    }
+
+    fun setMinutes(value: Int) {
+        minutesCount = value.coerceIn(minValue, maxValue)
+        onMinutesChanged?.invoke(minutesCount)
         invalidate()
     }
 
-    fun setRange(min: Int, max: Int) {
-        minValue = min
-        maxValue = max
+    fun setMinutesAnimate(target: Int) {
+        val clamped = target.coerceIn(minValue, maxValue)
+        val from = minutesCount
+        val duration = (Math.abs(clamped - from).toLong() % maxValue.toLong()) * 10L
+        val animator = ValueAnimator.ofInt(from, clamped)
+        animator.setDuration(Math.max(duration, 1000L))
+        animator.setInterpolator(emphasized)
+        animator.addUpdateListener { value ->
+            minutesCount = value.animatedValue as Int
+            onMinutesChanged?.invoke(minutesCount)
+            invalidate()
+        }
+        animator.start()
+    }
+
+    fun getHours(): String = "%02d".format(minutesCount / 60)
+
+    fun getMinutes(): String = "%02d".format(minutesCount % 60)
+
+    fun setAccentActive(value: Boolean) {
+        accentActive = value
         invalidate()
     }
 
@@ -51,7 +86,7 @@ class HapticSlider @JvmOverloads constructor(
         val inset = paddingTop.coerceAtLeast(8)
         val lineW = width * 0.5f
         val startX = (width - lineW) / 2f
-        val scroll = ((value - minValue) / step.toFloat()) * spacing
+        val scroll = minutesCount * spacing / 6f
         var y = height / 2f - (scroll % spacing)
         while (y > inset) {
             if (y < height - inset) {
@@ -59,6 +94,8 @@ class HapticSlider @JvmOverloads constructor(
             }
             y -= spacing
         }
+        accentPaint.color = if (accentActive) context.getColor(R.color.colorPrimaryContainer)
+        else context.getColor(R.color.colorPrimaryContainer)
         val barH = 6f * resources.displayMetrics.density
         canvas.drawRoundRect(
             width * 0.25f,
@@ -75,39 +112,34 @@ class HapticSlider @JvmOverloads constructor(
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 active = true
+                downY = event.y
                 accumulated = 0f
-                lastY = event.y
+                parent?.requestDisallowInterceptTouchEvent(true)
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
                 if (active) {
-                    accumulated += lastY - event.y
-                    lastY = event.y
-                    var changed = false
-                    while (accumulated >= spacing) {
-                        accumulated -= spacing
-                        if (value + step <= maxValue) {
-                            value += step
-                            changed = true
+                    val delta = event.y - downY
+                    val mapped = (delta / height.toFloat()) * 60f
+                    val steps = mapped - accumulated
+                    if (kotlin.math.abs(steps) >= 1f) {
+                        val target = (minutesCount + steps.toInt()).coerceIn(minValue, maxValue)
+                        if (target != minutesCount) {
+                            minutesCount = target
+                            accumulated += steps.toInt().toFloat()
+                            onMinutesChanged?.invoke(minutesCount)
+                            invalidate()
                         }
-                    }
-                    while (accumulated <= -spacing) {
-                        accumulated += spacing
-                        if (value - step >= minValue) {
-                            value -= step
-                            changed = true
-                        }
-                    }
-                    if (changed) {
-                        onValueChanged?.invoke(value)
-                        invalidate()
                     }
                     return true
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                active = false
-                return true
+                if (active) {
+                    active = false
+                    onTimePicked?.invoke()
+                    return true
+                }
             }
         }
         return super.onTouchEvent(event)
