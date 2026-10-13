@@ -28,6 +28,12 @@ class BagTiles @JvmOverloads constructor(
 
     fun setAddonDemoLoop(value: Boolean) = Unit
 
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val width = resolveSize(suggestedMinimumWidth, widthMeasureSpec)
+        val height = resolveSize((120 * resources.displayMetrics.density).toInt(), heightMeasureSpec)
+        setMeasuredDimension(width, height)
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val bags = 3

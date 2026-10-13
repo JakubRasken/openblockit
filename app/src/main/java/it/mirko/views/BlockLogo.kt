@@ -29,7 +29,8 @@ open class BlockLogo @JvmOverloads constructor(
     private var blinkRow = 0
     private var inkColor: Int
 
-    private val cellSize: Int
+    private val cellW: Int
+    private val cellH: Int
     private val cellGap: Int
     private val corner: Int
 
@@ -39,7 +40,8 @@ open class BlockLogo @JvmOverloads constructor(
         accentPaint.color = context.getColor(com.openblockit.R.color.colorPrimaryContainer)
         val dm = resources.displayMetrics
         cellGap = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0f, dm).toInt()
-        cellSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5f, dm).toInt()
+        cellW = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8f, dm).toInt()
+        cellH = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4f, dm).toInt()
         corner = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0f, dm).toInt()
     }
 
@@ -75,9 +77,9 @@ open class BlockLogo @JvmOverloads constructor(
         for (row in 0 until ROWS) {
             for (col in 0 until COLUMNS) {
                 if (MASKS[row][col] != '1') continue
-                val x = (cellSize + cellGap) * col.toFloat()
-                val y = (cellSize + cellGap) * row.toFloat()
-                rect.set(x, y, x + cellSize, y + cellSize)
+                val x = (cellW + cellGap) * col.toFloat()
+                val y = (cellH + cellGap) * row.toFloat()
+                rect.set(x, y, x + cellW, y + cellH)
                 canvas.drawRoundRect(rect, corner.toFloat(), corner.toFloat(), inkPaint)
                 if (now <= lastBlink + 2300 && blinkCol == col && blinkRow == row) {
                     accentPaint.alpha = when {
@@ -93,9 +95,8 @@ open class BlockLogo @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        val width = resolveSize((cellSize * (COLUMNS - 1)) + (cellSize * COLUMNS) + cellGap * COLUMNS, widthMeasureSpec)
-        val height = resolveSize(((ROWS - 1) * (cellSize + cellGap)) + cellSize, heightMeasureSpec)
+        val width = resolveSize(COLUMNS * cellW + (COLUMNS - 1) * cellGap, widthMeasureSpec)
+        val height = resolveSize(ROWS * cellH + (ROWS - 1) * cellGap, heightMeasureSpec)
         setMeasuredDimension(width, height)
     }
 

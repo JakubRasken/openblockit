@@ -95,7 +95,7 @@ class SquareNumber @JvmOverloads constructor(
     }
 
     private companion object {
-        const val CELL_ASPECT = 0.43f
+        const val CELL_ASPECT = 1.0f
         const val CELL_GAP = 2f
     }
 }

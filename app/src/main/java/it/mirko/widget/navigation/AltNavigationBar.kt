@@ -3,9 +3,9 @@ package it.mirko.widget.navigation
 import android.content.Context
 import android.util.AttributeSet
 import android.view.Gravity
+import android.view.View
 import android.widget.LinearLayout
 import com.google.android.material.card.MaterialCardView
-import com.openblockit.R
 
 class AltNavigationBar @JvmOverloads constructor(
     context: Context,
@@ -23,29 +23,24 @@ class AltNavigationBar @JvmOverloads constructor(
         private set
     var onItemSelected: ((Int) -> Unit)? = null
 
+    private var suppressCallback = false
+
     init {
         addView(row)
         for (i in 0 until 4) {
             val item = AltNavigationItem(context)
             item.menuId = i
-            item.setIconIndex(i)
+            item.setIcon(i)
             item.setOnClickListener { select(i) }
             items.add(item)
-            row.addView(item, LinearLayout.LayoutParams(dp(52), dp(52)).apply { marginEnd = dp(4) })
+            row.addView(item, LinearLayout.LayoutParams(dp(36), dp(48)))
         }
     }
-
-    private var suppressCallback = false
 
     private fun select(index: Int) {
         val changed = index != selectedItemId
         selectedItemId = index
-        items.forEachIndexed { i, item ->
-            item.setMenuItemSelected(i == index)
-            (item.pill.getChildAt(0) as? NavIconView)?.tint = item.context.getColor(
-                if (i == index) R.color.colorOnPrimaryContainer else R.color.colorPrimaryContainer
-            )
-        }
+        items.forEachIndexed { i, item -> item.setMenuItemSelected(i == index) }
         if (changed && !suppressCallback) {
             suppressCallback = true
             try {

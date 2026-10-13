@@ -132,6 +132,11 @@ class MainActivity : AppCompatActivity() {
         ).forEach { id ->
             findViewById<View?>(id)?.visibility = View.GONE
         }
+        (findViewById<View?>(R.id.homeFrame)?.layoutParams as? android.widget.FrameLayout.LayoutParams)?.let {
+            it.topMargin = dp(12)
+            findViewById<View>(R.id.homeFrame).layoutParams = it
+        }
+        findViewById<View>(R.id.homeRoot).fitsSystemWindows = true
     }
 
     private fun bindToolbar() {
@@ -214,6 +219,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.fab).setOnClickListener { startSession() }
+        (findViewById<View?>(R.id.fab) as? com.google.android.material.floatingactionbutton.FloatingActionButton)?.let { fab ->
+            fab.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.colorPrimary))
+            fab.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.colorOnPrimary))
+        }
         findViewById<View>(R.id.parachuteBox).setOnClickListener { selectSection(3) }
         bindExtendHold()
         bindSoundBox()
@@ -403,25 +412,27 @@ class MainActivity : AppCompatActivity() {
 
     private fun applySessionMetrics() {
         val glass = findViewById<View>(R.id.timerGlass)
-        glass.post {
-            adjustTimerSize(glass)
-            val middle = findViewById<View>(R.id.middleHost)
-            middle.post {
-                val minSide = minOf(resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels).toFloat()
-                if (middle.height > 0 && minSide > 0) {
-                    val ratio = (middle.height / minSide).coerceIn(0.55f, 1.0f)
-                    (sessionMiddle as? SquareContainer)?.setRatio(ratio)
-                }
+        glass.addOnLayoutChangeListener { view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+            if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) {
+                adjustTimerSize(view)
             }
+        }
+        glass.post { adjustTimerSize(glass) }
+        findViewById<View>(R.id.appBarLayout)?.setPadding(0, 0, 0, 0)
+        (sessionMiddle as? SquareContainer)?.setRatio(0.86f)
+        val navContainer = findViewById<View>(R.id.altNavBarContainer)
+        navContainer.layoutParams?.let {
+            it.height = dp(87)
+            navContainer.layoutParams = it
         }
     }
 
     private fun adjustTimerSize(glass: View) {
         val density = resources.displayMetrics.density
-        val byWidth = (glass.width - 16f * density - 12f * density) / 34f
+        val byWidth = (glass.width - 16f * density - 12f * density) / 22f
         val byHeight = (glass.height - 8f * density) / 5f
         val cellPx = minOf(byWidth, byHeight)
-        val multiplier = (cellPx / density).toInt().coerceAtLeast(4)
+        val multiplier = (cellPx / density).toInt().coerceIn(4, 7)
         listOf(hourLeft, hourRight, minuteLeft, minuteRight, separator).forEach { it.setSizeMultiplier(multiplier) }
         val spaceWidth = (multiplier * density).toInt()
         (findViewById<View>(R.id.spaceHour).layoutParams).apply { width = spaceWidth }

@@ -2,10 +2,11 @@ package it.mirko.widget.navigation
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
+import android.view.animation.PathInterpolator
 import android.widget.FrameLayout
-import android.widget.LinearLayout
+import androidx.appcompat.widget.AppCompatImageView
 import com.google.android.material.card.MaterialCardView
 import com.openblockit.R
 
@@ -16,92 +17,59 @@ class AltNavigationItem @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     var menuId: Int = 0
-    val pill: MaterialCardView = MaterialCardView(context)
-    private val iconView = NavIconView(context)
+    private val container: MaterialCardView
+    private val icon: AppCompatImageView
+    private val mask: MaterialCardView
+
+    private val standard = PathInterpolator(0.2f, 0f, 0f, 1f)
 
     init {
-        addView(
-            pill,
-            LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT).apply { gravity = Gravity.CENTER },
-        )
-        pill.addView(iconView, LayoutParams(dp(24), dp(24)).apply { gravity = Gravity.CENTER })
-        pill.radius = dp(16).toFloat()
-        pill.setCardBackgroundColor(context.getColor(R.color.colorPrimaryContainer))
+        LayoutInflater.from(context).inflate(R.layout._alt_navigation_item, this, true)
+        container = findViewById(R.id.itemSelectedContainer)
+        icon = findViewById(R.id.navIcon)
+        mask = findViewById(R.id.maskStats)
+        container.visibility = View.INVISIBLE
+        mask.translationX = -dp(24).toFloat()
     }
 
-    /** Sets the icon shown inside the pill. */
-    fun setIconIndex(index: Int) {
-        iconView.index = index
-        iconView.invalidate()
+    fun setIcon(index: Int) {
+        icon.setImageResource(
+            when (index) {
+                0 -> R.drawable.ic_navigation_session
+                1 -> R.drawable.ic_navigation_bag
+                2 -> R.drawable.ic_navigation_control
+                else -> R.drawable.ic_navigation_stats
+            }
+        )
     }
 
     fun setMenuItemSelected(selected: Boolean) {
-        pill.setCardBackgroundColor(
-            if (selected) context.getColor(R.color.colorPrimaryContainer)
-            else android.graphics.Color.TRANSPARENT
-        )
-        iconView.tint = if (selected) context.getColor(R.color.colorOnPrimaryContainer)
-        else context.getColor(R.color.colorPrimaryContainer)
+        container.animate().cancel()
+        mask.animate().cancel()
+        if (selected) {
+            container.visibility = View.VISIBLE
+            container.alpha = 0f
+            container.animate().alpha(1f).setDuration(160L).setInterpolator(standard).start()
+            icon.imageTintList = android.content.res.ColorStateList.valueOf(
+                context.getColor(R.color.colorOnSecondaryContainer)
+            )
+            mask.translationX = -dp(24).toFloat()
+            mask.animate().translationX(0f).setDuration(180L).setInterpolator(standard)
+                .withEndAction {
+                    mask.translationX = dp(24).toFloat()
+                }.start()
+        } else {
+            container.visibility = View.INVISIBLE
+            icon.imageTintList = android.content.res.ColorStateList.valueOf(
+                context.getColor(R.color.colorPrimaryContainer)
+            )
+            mask.translationX = -dp(24).toFloat()
+        }
+    }
+
+    fun setBadge(visible: Boolean) {
+        findViewById<View?>(R.id.badge)?.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
-}
-
-class NavIconView @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-) : View(context, attrs) {
-
-    var index: Int = 0
-    var tint: Int = 0
-        set(value) {
-            field = value
-            invalidate()
-        }
-
-    override fun onDraw(canvas: android.graphics.Canvas) {
-        super.onDraw(canvas)
-        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            color = tint
-            style = android.graphics.Paint.Style.STROKE
-            strokeWidth = 2f * resources.displayMetrics.density
-        }
-        val w = width.toFloat()
-        val h = height.toFloat()
-        when (index) {
-            0 -> {
-                canvas.drawCircle(w / 2f, h / 2f, w * 0.32f, paint)
-                canvas.drawLine(w / 2f, h * 0.18f, w / 2f, h * 0.34f, paint)
-                canvas.drawLine(w * 0.34f, h * 0.2f, w * 0.66f, h * 0.2f, paint)
-                canvas.drawLine(w / 2f, h / 2f, w / 2f, h * 0.32f, paint)
-            }
-            1 -> {
-                val left = w * 0.14f
-                canvas.drawRoundRect(left, h * 0.32f, w - left, h * 0.82f, 8f, 8f, paint)
-                canvas.drawLine(w * 0.38f, h * 0.32f, w * 0.38f, h * 0.2f, paint)
-                canvas.drawLine(w * 0.62f, h * 0.32f, w * 0.62f, h * 0.2f, paint)
-                canvas.drawLine(w * 0.38f, h * 0.2f, w * 0.62f, h * 0.2f, paint)
-            }
-            2 -> {
-                val fill = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = tint }
-                val s = w * 0.32f
-                val gap = w * 0.1f
-                val start = (w - (s * 2 + gap)) / 2f
-                canvas.drawRoundRect(start, start, start + s, start + s, 4f, 4f, fill)
-                canvas.drawRoundRect(start + s + gap, start, start + s * 2 + gap, start + s, 4f, 4f, fill)
-                canvas.drawRoundRect(start, start + s + gap, start + s, start + s * 2 + gap, 4f, 4f, fill)
-                canvas.drawRoundRect(start + s + gap, start + s + gap, start + s * 2 + gap, start + s * 2 + gap, 4f, 4f, fill)
-            }
-            else -> {
-                val fill = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = tint }
-                val barW = w * 0.16f
-                val heights = listOf(0.45f, 0.75f, 0.6f, 0.9f)
-                heights.forEachIndexed { i, hf ->
-                    val barH = h * hf
-                    val left = w * 0.12f + i * (barW + w * 0.06f)
-                    canvas.drawRoundRect(left, h - barH - h * 0.1f, left + barW, h - h * 0.1f, barW / 2f, barW / 2f, fill)
-                }
-            }
-        }
-    }
 }
