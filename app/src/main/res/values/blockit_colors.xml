@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="blockBarSurface">#2e2a26</color>
+    <color name="colorBackground">#e0e0e0</color>
+    <color name="colorOnPrimary">#fbf1ec</color>
+    <color name="colorOnPrimaryContainer">#471602</color>
+    <color name="colorOnSecondaryContainer">#f4efee</color>
+    <color name="colorOnSurface">#4e4948</color>
+    <color name="colorOnSurfaceVariant">#787170</color>
+    <color name="colorOutline">#615b5a</color>
+    <color name="colorOutlineVariant">#75615b5a</color>
+    <color name="colorPrimary">#252323</color>
+    <color name="colorPrimaryContainer">#f55314</color>
+    <color name="colorSecondaryContainer">#615b5a</color>
+    <color name="colorSurface">#e0e0e0</color>
+    <color name="colorSurfaceBright">#fff</color>
+    <color name="colorSurfaceSheet">#e0e0e0</color>
+    <color name="colorSurfaceVariant">#dbdbdb</color>
+    <color name="nothing_red">#dc403e</color>
+    <color name="spark_base_line_color">#757577</color>
+    <color name="spark_line_color">#000000</color>
+    <color name="spark_scrub_line_color">#757577</color>
+    <color name="textColorPrimary">#2c2a29</color>
+    <color name="textColorSecondary">#615b5a</color>
+    <color name="color_on_primary_alpha">#33FBF1EC</color>
+    <color name="color_on_surface">#2c2a29</color>
+    <color name="color_on_surface_variant">#787170</color>
+    <color name="widget_bg_container">#FFFFFF</color>
+    <color name="widget_on_bg_container">#2c2a29</color>
+    <color name="widget_on_surface_variant">#787170</color>
+    <color name="widget_primary_container">#F55314</color>
+    <color name="widget_tile_quiet">#DBDBDB</color>
+    <color name="widget_on_primary_container">#FBF1EC</color>
+</resources>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<color name="colorBackground">#201d1a</color>
+    <color name="colorOnPrimary">#1b110d</color>
+    <color name="colorOnSecondaryContainer">#40352e</color>
+    <color name="colorOnSurface">#fbece1</color>
+    <color name="colorOnSurfaceVariant">#fae4d3</color>
+    <color name="colorOutline">#807a7a</color>
+    <color name="colorOutlineVariant">#758f8888</color>
+    <color name="colorPrimary">#ffe4cf</color>
+    <color name="colorPrimaryContainer">#f47442</color>
+    <color name="colorSecondaryContainer">#ffb38f</color>
+    <color name="colorSurface">#201d1a</color>
+    <color name="colorSurfaceBright">#332a27</color>
+    <color name="colorSurfaceSheet">#2e2a26</color>
+    <color name="colorSurfaceVariant">#272320</color>
+    <color name="nothing_red">#ff3702</color>
+    <color name="textColorPrimary">#f8f5f5</color>
+    <color name="textColorSecondary">#f1e8e6</color>
+    <color name="color_on_primary_alpha">#33FBECE1</color>
+    <color name="color_on_surface">#fbece1</color>
+    <color name="color_on_surface_variant">#fae4d3</color>
+    <color name="widget_bg_container">#332A27</color>
+    <color name="widget_on_bg_container">#FBECE1</color>
+    <color name="widget_on_surface_variant">#FAE4D3</color>
+    <color name="widget_primary_container">#F47442</color>
+    <color name="widget_tile_quiet">#272320</color>
+    <color name="widget_on_primary_container">#1B110D</color>
+</resources>

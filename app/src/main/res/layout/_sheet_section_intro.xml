@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="@drawable/sheet_bg"
+    android:paddingBottom="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp">
+    <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+        android:layout_gravity="center_horizontal"
+        android:id="@+id/sectionIntroHandle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_marginTop="24dp"
+        app:cardBackgroundColor="@color/colorSurfaceBright"
+        app:cardCornerRadius="@dimen/large_corner"
+        app:cardElevation="0dp"
+        style="@style/Widget.Material3.CardView.Filled">
+        <FrameLayout
+            android:id="@+id/sectionIntroDemo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="12dp"/>
+    </com.google.android.material.card.MaterialCardView>
+    <TextView
+        android:textSize="19sp"
+        android:textColor="@color/colorOnSurface"
+        android:gravity="center"
+        android:id="@+id/sectionIntroTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/google_sans_bold"/>
+    <TextView
+        android:textSize="14sp"
+        android:textColor="@color/colorOnSurfaceVariant"
+        android:gravity="center"
+        android:id="@+id/sectionIntroBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:fontFamily="@font/google_sans_regular"/>
+</androidx.appcompat.widget.LinearLayoutCompat>

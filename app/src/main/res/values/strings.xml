@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">openblockit</string>
+
+    <string name="accessibility_service_label">openblockit · Session block</string>
+    <string name="accessibility_service_description">openblockit uses this accessibility service only to keep you on the block screen when, during a session, you open an app that is not in your bag, so you cannot use other apps until the session ends. It does not read screen content.</string>
+
+    <string name="notification_channel_session_name">Session countdown</string>
+    <string name="notification_channel_session_desc">Keeps the countdown visible while a session is active</string>
+    <string name="notification_channel_complete_name">Session complete</string>
+    <string name="notification_channel_complete_desc">Notifies you when a session is completed</string>
+    <string name="notification_channel_routine_name">Routine reminder</string>
+    <string name="notification_channel_routine_desc">Heads-up before an automatic routine session starts</string>
+    <string name="notification_channel_streak_name">Streak reminders</string>
+    <string name="notification_channel_streak_desc">An evening nudge if you have not done at least five minutes of session today</string>
+    <string name="notification_channel_protection_name">Protection</string>
+    <string name="notification_channel_protection_desc">Alerts when the block protection is not working</string>
+
+    <string name="widget_preset_title">Start a session</string>
+    <string name="widget_streak_title">Your tower</string>
+</resources>

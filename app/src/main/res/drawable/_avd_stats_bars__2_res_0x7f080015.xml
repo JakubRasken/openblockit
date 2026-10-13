@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:interpolator="@android:interpolator/overshoot"
+    android:duration="340"
+    android:startOffset="220"
+    android:valueFrom="0.12"
+    android:valueTo="1"
+    android:propertyName="scaleY"/>

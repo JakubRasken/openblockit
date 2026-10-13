@@ -1,0 +1,333 @@
+<resources>
+<style name="AboutBlockLabel" parent="">
+        <item name="android:textColor">@color/colorOnSurface</item>
+        <item name="android:gravity">center</item>
+        <item name="android:padding">3dp</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:fontFamily">@font/google_sans_bold</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:autoSizeMinTextSize">8sp</item>
+        <item name="android:autoSizeMaxTextSize">15sp</item>
+    </style>
+<style name="AboutDividerTile" parent="">
+        <item name="android:background">@color/colorOutlineVariant</item>
+        <item name="android:layout_width">6dp</item>
+        <item name="android:layout_height">6dp</item>
+        <item name="android:layout_marginStart">5dp</item>
+        <item name="android:layout_marginEnd">5dp</item>
+    </style>
+<style name="Anim.BLOCKIT.TopSheet" parent="@android:style/Animation">
+        <item name="android:windowEnterAnimation">@anim/top_sheet_in</item>
+        <item name="android:windowExitAnimation">@anim/top_sheet_out</item>
+    </style>
+<style name="PreferenceSummaryTextStyle" parent="">
+        <item name="android:textAppearance">?android:attr/textAppearanceListItemSecondary</item>
+    </style>
+<style name="ShapeAppearance.Corner.Bottom.Left" parent="@style/ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeBottomLeft">@dimen/large_corner</item>
+        <item name="cornerSizeBottomRight">@dimen/small_corner</item>
+        <item name="cornerSizeTopLeft">@dimen/small_corner</item>
+        <item name="cornerSizeTopRight">@dimen/small_corner</item>
+    </style>
+<style name="ShapeAppearance.Corner.Bottom.Right" parent="@style/ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeBottomLeft">@dimen/small_corner</item>
+        <item name="cornerSizeBottomRight">@dimen/large_corner</item>
+        <item name="cornerSizeTopLeft">@dimen/small_corner</item>
+        <item name="cornerSizeTopRight">@dimen/small_corner</item>
+    </style>
+<style name="ShapeAppearance.Corner.Center.Left" parent="@style/ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeBottomLeft">@dimen/small_corner</item>
+        <item name="cornerSizeBottomRight">@dimen/small_corner</item>
+        <item name="cornerSizeTopLeft">@dimen/small_corner</item>
+        <item name="cornerSizeTopRight">@dimen/small_corner</item>
+    </style>
+<style name="ShapeAppearance.Corner.Right" parent="@style/ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeBottomLeft">@dimen/small_corner</item>
+        <item name="cornerSizeBottomRight">@dimen/large_corner</item>
+        <item name="cornerSizeTopLeft">@dimen/small_corner</item>
+        <item name="cornerSizeTopRight">@dimen/large_corner</item>
+    </style>
+<style name="ShapeAppearance.Corner.Up.Left" parent="@style/ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeBottomLeft">@dimen/small_corner</item>
+        <item name="cornerSizeBottomRight">@dimen/small_corner</item>
+        <item name="cornerSizeTopLeft">@dimen/large_corner</item>
+        <item name="cornerSizeTopRight">@dimen/small_corner</item>
+    </style>
+<style name="ShapeAppearance.Corner.Up.Right" parent="@style/ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeBottomLeft">@dimen/small_corner</item>
+        <item name="cornerSizeBottomRight">@dimen/small_corner</item>
+        <item name="cornerSizeTopLeft">@dimen/small_corner</item>
+        <item name="cornerSizeTopRight">@dimen/large_corner</item>
+    </style>
+<style name="ShapeAppearance.Level" parent="@style/ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamilyBottomLeft">rounded</item>
+        <item name="cornerFamilyBottomRight">cut</item>
+        <item name="cornerFamilyTopLeft">rounded</item>
+        <item name="cornerFamilyTopRight">cut</item>
+        <item name="cornerSizeBottomLeft">@dimen/small_corner</item>
+        <item name="cornerSizeBottomRight">48%</item>
+        <item name="cornerSizeTopLeft">@dimen/small_corner</item>
+        <item name="cornerSizeTopRight">48%</item>
+    </style>
+<style name="ShapeAppearanceSlider.Down" parent="@style/ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeBottomLeft">@dimen/large_corner</item>
+        <item name="cornerSizeBottomRight">@dimen/large_corner</item>
+        <item name="cornerSizeTopLeft">@dimen/small_corner</item>
+        <item name="cornerSizeTopRight">@dimen/small_corner</item>
+    </style>
+<style name="ShapeAppearanceSlider.Up" parent="@style/ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeBottomLeft">@dimen/small_corner</item>
+        <item name="cornerSizeBottomRight">@dimen/small_corner</item>
+        <item name="cornerSizeTopLeft">@dimen/large_corner</item>
+        <item name="cornerSizeTopRight">@dimen/large_corner</item>
+    </style>
+<style name="Theme.BLOCKIT" parent="@style/Theme.BLOCKIT.Base">
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="android:textColorSecondary">@color/textColorSecondary</item>
+        <item name="android:textColor">@color/textColorPrimary</item>
+        <item name="colorOnPrimary">@color/colorOnPrimary</item>
+        <item name="colorOnPrimaryContainer">@color/colorOnPrimaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/colorOnSecondaryContainer</item>
+        <item name="colorOnSurface">@color/colorOnSurface</item>
+        <item name="colorOnSurfaceVariant">@color/colorOnSurfaceVariant</item>
+        <item name="colorOutline">@color/colorOutline</item>
+        <item name="colorOutlineVariant">@color/colorOutlineVariant</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryContainer">@color/colorPrimaryContainer</item>
+        <item name="colorSecondaryContainer">@color/colorSecondaryContainer</item>
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="colorSurfaceBright">@color/colorSurfaceBright</item>
+        <item name="colorSurfaceVariant">@color/colorSurfaceVariant</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.BLOCKIT.Alert</item>
+    </style>
+<style name="Theme.BLOCKIT.Base" parent="@style/Theme.Material3.DayNight.NoActionBar">
+        <item name="android:fontFamily">@font/google_sans_regular</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowLightStatusBar">@bool/isLightStatusBar</item>
+        <item name="android:windowLightNavigationBar">@bool/isLightStatusBar</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="fontFamily">@font/google_sans_regular</item>
+    </style>
+<style name="Theme.BLOCKIT.BottomSheet" parent="@style/ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightNavigationBar">@bool/isLightStatusBar</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="bottomSheetStyle">@style/Widget.BLOCKIT.BottomSheet.Modal</item>
+        <item name="enableEdgeToEdge">true</item>
+    </style>
+<style name="Theme.BLOCKIT.EasterEgg" parent="@style/Theme.Material3.Dark.NoActionBar">
+        <item name="android:colorBackground">#001733</item>
+        <item name="android:fontFamily">@font/google_sans_regular</item>
+        <item name="android:statusBarColor">#001733</item>
+        <item name="android:navigationBarColor">#001733</item>
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="fontFamily">@font/google_sans_regular</item>
+    </style>
+<style name="Theme.BLOCKIT.Nothing" parent="@style/Theme.BLOCKIT">
+        <item name="android:fontFamily">@font/space_mono_regular</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowLightStatusBar">@bool/isLightStatusBar</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="fontFamily">@font/space_mono_regular</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+<style name="Theme.BLOCKIT.Onboarding" parent="@style/Theme.SplashScreen">
+        <item name="postSplashScreenTheme">@style/Theme.BLOCKIT</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/empty_splash_icon</item>
+        <item name="windowSplashScreenAnimationDuration">1</item>
+        <item name="windowSplashScreenBackground">@color/colorSurface</item>
+    </style>
+<style name="Theme.BLOCKIT.Splash" parent="@style/Theme.SplashScreen">
+        <item name="postSplashScreenTheme">@style/Theme.BLOCKIT</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/empty_splash_icon</item>
+        <item name="windowSplashScreenAnimationDuration">1</item>
+        <item name="windowSplashScreenBackground">@color/colorSurface</item>
+    </style>
+<style name="Theme.BLOCKIT.TopSheet" parent="@style/Theme.Material3.DayNight.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowAnimationStyle">@style/Anim.BLOCKIT.TopSheet</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:fontFamily">@font/google_sans_regular</item>
+    </style>
+<style name="Theme.BLOCKIT.WidgetConfiguration" parent="@style/Theme.Material3.DynamicColors.DayNight">
+        <item name="android:colorBackground">@android:color/transparent</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:fontFamily">@font/google_sans_regular</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowLightStatusBar">@bool/isLightStatusBar</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="fontFamily">@font/google_sans_regular</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+<style name="Theme.BLOCKIT.WidgetPanel" parent="@style/Theme.BLOCKIT.WidgetConfiguration">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowShowWallpaper">false</item>
+    </style>
+<style name="ThemeOverlay.BLOCKIT.Alert" parent="@style/ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="android:fontFamily">@font/google_sans_regular</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.BLOCKIT.AlertButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.BLOCKIT.AlertButton</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.BLOCKIT.AlertButton</item>
+        <item name="colorOnPrimary">@color/colorOnPrimaryContainer</item>
+        <item name="colorOnSurface">@color/colorOnSurface</item>
+        <item name="colorOnSurfaceVariant">@color/colorOnSurfaceVariant</item>
+        <item name="colorPrimary">@color/colorPrimaryContainer</item>
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="colorSurfaceContainer">@color/colorSurface</item>
+        <item name="colorSurfaceContainerHigh">@color/colorSurface</item>
+        <item name="colorSurfaceContainerHighest">@color/colorSurface</item>
+        <item name="colorSurfaceVariant">@color/colorSurfaceVariant</item>
+        <item name="fontFamily">@font/google_sans_regular</item>
+    </style>
+<style name="Widget.BLOCKIT.AlertButton" parent="@style/Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/colorPrimaryContainer</item>
+        <item name="android:fontFamily">@font/google_sans_bold</item>
+    </style>
+<style name="Widget.BLOCKIT.BottomSheet.Modal" parent="@style/Widget.Material3.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+    </style>
+<style name="bottomNavigationTextSelected" parent="@style/TextAppearance.Material3.LabelMedium">
+        <item name="android:textStyle">bold</item>
+    </style>
+<style name="bottomNavigationTextUnselected" parent="@style/TextAppearance.Material3.LabelMedium">
+        <item name="android:textStyle">normal</item>
+    </style>
+<style name="TextAppearance.Material3.BodyLarge" parent="@style/TextAppearance.M3.Sys.Typescale.BodyLarge">
+    </style>
+<style name="TextAppearance.Material3.BodyMedium" parent="@style/TextAppearance.M3.Sys.Typescale.BodyMedium">
+    </style>
+<style name="TextAppearance.Material3.BodySmall" parent="@style/TextAppearance.M3.Sys.Typescale.BodySmall">
+    </style>
+<style name="TextAppearance.Material3.DisplayMedium" parent="@style/TextAppearance.M3.Sys.Typescale.DisplayMedium">
+    </style>
+<style name="TextAppearance.Material3.DisplaySmall" parent="@style/TextAppearance.M3.Sys.Typescale.DisplaySmall">
+    </style>
+<style name="TextAppearance.Material3.HeadlineMedium" parent="@style/TextAppearance.M3.Sys.Typescale.HeadlineMedium">
+    </style>
+<style name="TextAppearance.Material3.HeadlineSmall" parent="@style/TextAppearance.M3.Sys.Typescale.HeadlineSmall">
+    </style>
+<style name="TextAppearance.Material3.LabelLarge" parent="@style/TextAppearance.M3.Sys.Typescale.LabelLarge">
+    </style>
+<style name="TextAppearance.Material3.LabelMedium" parent="@style/TextAppearance.M3.Sys.Typescale.LabelMedium">
+    </style>
+<style name="TextAppearance.Material3.LabelSmall" parent="@style/TextAppearance.M3.Sys.Typescale.LabelSmall">
+    </style>
+<style name="TextAppearance.Material3.TitleLarge" parent="@style/TextAppearance.M3.Sys.Typescale.TitleLarge">
+    </style>
+<style name="TextAppearance.Material3.TitleMedium" parent="@style/TextAppearance.M3.Sys.Typescale.TitleMedium">
+    </style>
+<style name="Theme.AppWidget.AppWidgetContainer.GigaIcon" parent="@style/Theme.AppWidget.AppWidgetContainer">
+        <item name="android:textColor">@color/widget_on_primary_container</item>
+    </style>
+<style name="Widget.AppWidget.Container" parent="@android:style/Widget">
+        <item name="android:id">@android:id/background</item>
+        <item name="android:background">@drawable/app_widget_background</item>
+        <item name="android:padding">?attr/appWidgetPadding</item>
+    </style>
+<style name="Widget.Material3.Button" parent="@style/Widget.MaterialComponents.Button">
+        <item name="android:textAppearance">?attr/textAppearanceLabelLarge</item>
+        <item name="android:textColor">@color/m3_button_foreground_color_selector</item>
+        <item name="android:paddingLeft">@dimen/m3_btn_padding_left</item>
+        <item name="android:paddingTop">@dimen/m3_btn_padding_top</item>
+        <item name="android:paddingRight">@dimen/m3_btn_padding_right</item>
+        <item name="android:paddingBottom">@dimen/m3_btn_padding_bottom</item>
+        <item name="android:maxWidth">@dimen/m3_btn_max_width</item>
+        <item name="android:insetTop">@dimen/m3_btn_inset</item>
+        <item name="android:insetBottom">@dimen/m3_btn_inset</item>
+        <item name="android:stateListAnimator">@animator/m3_btn_state_list_anim</item>
+        <item name="backgroundTint">@color/m3_button_background_color_selector</item>
+        <item name="elevation">@dimen/m3_comp_filled_button_container_elevation</item>
+        <item name="enforceTextAppearance">false</item>
+        <item name="iconSize">@dimen/m3_comp_filled_button_with_icon_icon_size</item>
+        <item name="iconTint">@color/m3_button_foreground_color_selector</item>
+        <item name="materialThemeOverlay">@style/ThemeOverlay.Material3.Button</item>
+        <item name="rippleColor">@color/m3_button_ripple_color_selector</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.M3.Comp.FilledButton.Container.Shape</item>
+    </style>
+<style name="Widget.Material3.Button.IconButton" parent="@style/Widget.Material3.Button.TextButton">
+        <item name="android:paddingLeft">@dimen/m3_btn_icon_only_default_padding</item>
+        <item name="android:paddingTop">@dimen/m3_btn_icon_only_default_padding</item>
+        <item name="android:paddingRight">@dimen/m3_btn_icon_only_default_padding</item>
+        <item name="android:paddingBottom">@dimen/m3_btn_icon_only_default_padding</item>
+        <item name="android:minWidth">@dimen/m3_btn_icon_only_min_width</item>
+        <item name="android:insetLeft">@dimen/m3_btn_inset</item>
+        <item name="android:insetRight">@dimen/m3_btn_inset</item>
+        <item name="iconPadding">@dimen/m3_btn_icon_only_icon_padding</item>
+        <item name="iconSize">@dimen/m3_btn_icon_only_default_size</item>
+        <item name="iconTint">@color/m3_icon_button_icon_color_selector</item>
+        <item name="materialThemeOverlay">@style/ThemeOverlay.Material3.Button.IconButton</item>
+    </style>
+<style name="Widget.Material3.Button.OutlinedButton" parent="@style/Widget.Material3.Button.TextButton">
+        <item name="android:paddingLeft">@dimen/m3_btn_padding_left</item>
+        <item name="android:paddingRight">@dimen/m3_btn_padding_right</item>
+        <item name="strokeColor">@color/m3_button_outline_color_selector</item>
+        <item name="strokeWidth">@dimen/m3_comp_outlined_button_outline_width</item>
+    </style>
+<style name="Widget.Material3.Button.TextButton" parent="@style/Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textAppearance">?attr/textAppearanceLabelLarge</item>
+        <item name="android:textColor">@color/m3_text_button_foreground_color_selector</item>
+        <item name="android:paddingLeft">@dimen/m3_btn_text_btn_padding_left</item>
+        <item name="android:paddingTop">@dimen/m3_btn_padding_top</item>
+        <item name="android:paddingRight">@dimen/m3_btn_text_btn_padding_right</item>
+        <item name="android:paddingBottom">@dimen/m3_btn_padding_bottom</item>
+        <item name="android:maxWidth">@dimen/m3_btn_max_width</item>
+        <item name="android:insetTop">@dimen/m3_btn_inset</item>
+        <item name="android:insetBottom">@dimen/m3_btn_inset</item>
+        <item name="backgroundTint">@color/m3_text_button_background_color_selector</item>
+        <item name="enforceTextAppearance">false</item>
+        <item name="iconTint">@color/m3_text_button_foreground_color_selector</item>
+        <item name="materialThemeOverlay">@style/ThemeOverlay.Material3.Button.TextButton</item>
+        <item name="rippleColor">@color/m3_text_button_ripple_color_selector</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.M3.Comp.TextButton.Container.Shape</item>
+    </style>
+<style name="Widget.Material3.Button.TonalButton" parent="@style/Widget.Material3.Button">
+        <item name="materialThemeOverlay">@style/ThemeOverlay.Material3.Button.TonalButton</item>
+        <item name="rippleColor">@color/m3_tonal_button_ripple_color_selector</item>
+    </style>
+<style name="Widget.Material3.CardView.Filled" parent="@style/Base.Widget.Material3.CardView">
+        <item name="cardBackgroundColor">?attr/colorSurfaceContainerHighest</item>
+        <item name="cardElevation">@dimen/m3_comp_filled_card_container_elevation</item>
+        <item name="checkedIconSize">@dimen/m3_comp_filled_card_icon_size</item>
+        <item name="shapeAppearance">?attr/shapeAppearanceCornerMedium</item>
+        <item name="strokeWidth">0dp</item>
+    </style>
+<style name="Widget.Material3.CardView.Outlined" parent="@style/Base.Widget.Material3.CardView">
+        <item name="cardBackgroundColor">?attr/colorSurface</item>
+        <item name="cardElevation">@dimen/m3_comp_outlined_card_container_elevation</item>
+        <item name="checkedIconSize">@dimen/m3_comp_outlined_card_icon_size</item>
+        <item name="shapeAppearance">?attr/shapeAppearanceCornerMedium</item>
+        <item name="strokeWidth">@dimen/m3_comp_outlined_card_outline_width</item>
+    </style>
+<style name="Theme.AppWidget.AppWidgetContainer" parent="@style/Theme.AppWidget.AppWidgetContainerParent">
+        <item name="appWidgetPadding">@dimen/widget_padding</item>
+    </style>
+<style name="Theme.AppWidget.AppWidgetContainerParent" parent="@style/Theme.Material3.DynamicColors.DayNight">
+        <item name="appWidgetInnerRadius">20dp</item>
+        <item name="appWidgetInnerRadiusHuge">72dp</item>
+        <item name="appWidgetInnerRadiusSmall">4dp</item>
+        <item name="appWidgetRadius">28dp</item>
+    </style>
+</resources>

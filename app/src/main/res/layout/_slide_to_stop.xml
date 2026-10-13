@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <TextView
+        android:textColor="#99ffffff"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:id="@+id/stopHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/slide_to_stop"
+        android:maxLines="1"
+        android:textAllCaps="true"
+        android:fontFamily="@font/google_sans_bold"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="92dp"
+        android:letterSpacing="0.1"
+        android:autoSizeTextType="uniform"
+        android:autoSizeStepGranularity="1sp"
+        android:autoSizeMinTextSize="8sp"
+        android:autoSizeMaxTextSize="12sp"/>
+    <com.google.android.material.card.MaterialCardView
+        android:layout_gravity="end|center_vertical"
+        android:id="@+id/stopHandle"
+        android:layout_width="76dp"
+        android:layout_height="56dp"
+        android:transitionName="session_handle"
+        app:cardBackgroundColor="#f2efec"
+        app:cardCornerRadius="@dimen/small_corner"
+        app:cardElevation="0dp"
+        style="@style/Widget.Material3.CardView.Filled">
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_gravity="center"
+            android:id="@+id/stopHandleIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_parachute"
+            android:importantForAccessibility="no"
+            app:tint="#1e1c1a"/>
+    </com.google.android.material.card.MaterialCardView>
+</merge>

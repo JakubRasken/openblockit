@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="squareRatio" format="float" />
+    <attr name="ticker_animateMeasurementChange" format="boolean" />
+    <attr name="ticketBackgroundColor" format="color" />
+    <attr name="ticketBorderColor" format="color" />
+    <attr name="ticketBorderWidth" format="dimension" />
+    <attr name="ticketCornerRadius" format="dimension" />
+    <attr name="ticketCornerType" format="string" />
+    <attr name="ticketDividerColor" format="color" />
+    <attr name="ticketDividerDashGap" format="dimension" />
+    <attr name="ticketDividerDashLength" format="dimension" />
+    <attr name="ticketDividerPadding" format="dimension" />
+    <attr name="ticketDividerType" format="string" />
+    <attr name="ticketDividerWidth" format="dimension" />
+    <attr name="ticketElevation" format="dimension" />
+    <attr name="ticketOrientation" format="string" />
+    <attr name="ticketScallopPositionPercent" format="float" />
+    <attr name="ticketScallopRadius" format="dimension" />
+    <attr name="ticketShowBorder" format="boolean" />
+    <attr name="ticketShowDivider" format="boolean" />
+    <attr name="appWidgetRadius" format="dimension" />
+    <attr name="appWidgetInnerRadius" format="dimension" />
+    <attr name="appWidgetPadding" format="dimension" />
+    <attr name="appWidgetInnerRadiusHuge" format="dimension" />
+    <attr name="appWidgetInnerRadiusSmall" format="dimension" />
+</resources>

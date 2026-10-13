@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="8dp"
+        android:layout_marginStart="@dimen/large_corner"
+        android:layout_marginEnd="@dimen/large_corner"
+        app:cardBackgroundColor="@color/colorPrimaryContainer"
+        style="@style/Widget.Material3.CardView.Filled"/>
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/banner1"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginStart="@dimen/large_corner"
+        android:layout_marginEnd="@dimen/large_corner"
+        app:cardBackgroundColor="@color/colorPrimaryContainer"
+        style="@style/Widget.Material3.CardView.Filled"/>
+</FrameLayout>
