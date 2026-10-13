@@ -52,6 +52,7 @@ class SquareNumber @JvmOverloads constructor(
     fun setSizeMultiplier(value: Int) {
         multiplier = value
         cellSize = (value * resources.displayMetrics.density).roundToInt()
+        
         requestLayout()
         invalidate()
     }

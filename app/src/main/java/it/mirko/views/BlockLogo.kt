@@ -40,8 +40,8 @@ open class BlockLogo @JvmOverloads constructor(
         accentPaint.color = context.getColor(com.openblockit.R.color.colorPrimaryContainer)
         val dm = resources.displayMetrics
         cellGap = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0f, dm).toInt()
-        cellW = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8f, dm).toInt()
-        cellH = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4f, dm).toInt()
+        cellW = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5.75f, dm).toInt()
+        cellH = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5f, dm).toInt()
         corner = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 0f, dm).toInt()
     }
 

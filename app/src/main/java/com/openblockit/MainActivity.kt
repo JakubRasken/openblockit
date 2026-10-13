@@ -90,7 +90,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
         setContentView(R.layout._activity_home)
-        selectedMinutes = Prefs.lastMinutes.coerceIn(1, 720)
+        if (Prefs.lastMinutes < 5) Prefs.lastMinutes = 30
+        selectedMinutes = Prefs.lastMinutes.coerceIn(5, 720)
         extendedMinutes = Prefs.main.getInt("extended_minutes", 0)
         hidePremium()
         bindToolbar()
@@ -222,6 +223,7 @@ class MainActivity : AppCompatActivity() {
         (findViewById<View?>(R.id.fab) as? com.google.android.material.floatingactionbutton.FloatingActionButton)?.let { fab ->
             fab.backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.colorPrimary))
             fab.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.colorOnPrimary))
+            (fab.parent as? View)?.visibility = View.GONE
         }
         findViewById<View>(R.id.parachuteBox).setOnClickListener { selectSection(3) }
         bindExtendHold()
@@ -425,14 +427,21 @@ class MainActivity : AppCompatActivity() {
             it.height = dp(87)
             navContainer.layoutParams = it
         }
+        val screen = findViewById<View>(R.id.screen)
+        (screen.layoutParams as? android.widget.LinearLayout.LayoutParams)?.let {
+            it.weight = 0f
+            it.height = dp(200)
+            screen.layoutParams = it
+        }
+        findViewById<View?>(R.id.homeFrame)?.setPadding(0, dp(48), 0, dp(128))
     }
 
     private fun adjustTimerSize(glass: View) {
         val density = resources.displayMetrics.density
-        val byWidth = (glass.width - 16f * density - 12f * density) / 22f
+        val byWidth = (glass.width - 16f * density - 12f * density) / 20f
         val byHeight = (glass.height - 8f * density) / 5f
         val cellPx = minOf(byWidth, byHeight)
-        val multiplier = (cellPx / density).toInt().coerceIn(4, 7)
+        val multiplier = (cellPx / density).toInt().coerceIn(4, 20)
         listOf(hourLeft, hourRight, minuteLeft, minuteRight, separator).forEach { it.setSizeMultiplier(multiplier) }
         val spaceWidth = (multiplier * density).toInt()
         (findViewById<View>(R.id.spaceHour).layoutParams).apply { width = spaceWidth }
@@ -485,6 +494,7 @@ class MainActivity : AppCompatActivity() {
         }
         slide.armExit()
         slide.setOnSlideCompleteListener { confirmParachute() }
+        (findViewById<View?>(R.id.fab)?.parent as? View)?.visibility = View.VISIBLE
         updateBlockTiles()
         handler.removeCallbacks(ticker)
         handler.post(ticker)
@@ -524,6 +534,7 @@ class MainActivity : AppCompatActivity() {
         slide.reset()
         slide.setHint(R.string.slide_to_start, R.drawable.ic_play)
         slide.setOnSlideCompleteListener { startSession() }
+        (findViewById<View?>(R.id.fab)?.parent as? View)?.visibility = View.GONE
         findViewById<TextView>(R.id.toolbarChuteCount).text = Prefs.parachuteCount.toString()
     }
 

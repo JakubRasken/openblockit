@@ -52,7 +52,9 @@ class HapticSlider @JvmOverloads constructor(
     }
 
     fun setMinutes(value: Int) {
-        minutesCount = value.coerceIn(minValue, maxValue)
+        val clamped = value.coerceIn(minValue, maxValue)
+        if (clamped == minutesCount) return
+        minutesCount = clamped
         onMinutesChanged?.invoke(minutesCount)
         invalidate()
     }
