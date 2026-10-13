@@ -133,7 +133,7 @@ class MainActivity : AppCompatActivity() {
         wheel = findViewById(R.id.wheel)
 
         listOf(hourLeft, hourRight, minuteLeft, minuteRight, findViewById<SquareNumber>(R.id.timerSeparator))
-            .forEach { it.setSizeMultiplier(11) }
+            .forEach { it.setSizeMultiplier(5) }
         minuteLeft.alpha = 0.7f
         minuteRight.alpha = 0.7f
         findViewById<View>(R.id.timerSeparator).alpha = 0.7f
@@ -331,11 +331,11 @@ class MainActivity : AppCompatActivity() {
             return
         }
         findViewById<SquareNumber>(R.id.secLeft).apply {
-            setSizeMultiplier(9)
+            setSizeMultiplier(5)
             setValue((secondsLeft % 60) / 10)
         }
         findViewById<SquareNumber>(R.id.secRight).apply {
-            setSizeMultiplier(9)
+            setSizeMultiplier(5)
             setValue(secondsLeft % 10)
         }
         findViewById<TextView>(R.id.endTimeValue).text =

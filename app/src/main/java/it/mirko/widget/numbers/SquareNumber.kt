@@ -1,149 +1,59 @@
 package it.mirko.widget.numbers
 
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.util.AttributeSet
-import android.view.Gravity
 import android.view.View
-import android.widget.FrameLayout
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class SquareNumber @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : View(context, attrs, defStyleAttr) {
 
-    private var cellSize: Int = 0
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
+
+    private var cellSize: Int = (2f * resources.displayMetrics.density).roundToInt()
     private var multiplier: Int = 2
     private var animateChanges = false
     private var isDecMin = false
     private var isHour = false
     private var currentValue = 0
 
-    init {
-        setLayoutDirection(LAYOUT_DIRECTION_LTR)
-        cellSize = (multiplier * resources.displayMetrics.density).roundToInt()
-        rebuild()
-    }
+    private val masks: Map<Int, List<String>> = mapOf(
+        0 to listOf("111", "101", "101", "101", "111"),
+        1 to listOf("001", "001", "001", "001", "001"),
+        2 to listOf("111", "001", "111", "100", "111"),
+        3 to listOf("111", "001", "111", "001", "111"),
+        4 to listOf("101", "101", "111", "001", "001"),
+        5 to listOf("111", "100", "111", "001", "111"),
+        6 to listOf("111", "100", "111", "101", "111"),
+        7 to listOf("111", "001", "001", "001", "001"),
+        8 to listOf("111", "101", "111", "101", "111"),
+        9 to listOf("111", "101", "111", "001", "111"),
+    )
 
-    private fun rebuild() {
-        removeAllViews()
-        val lp = LayoutParams(cellSize, cellSize).apply { gravity = Gravity.START or Gravity.TOP }
-        repeat(13) {
-            val v = View(context)
-            v.layoutParams = lp
-            v.setBackgroundColor(Color.WHITE)
-            addView(v)
-        }
-        for (i in 0 until childCount) {
-            getChildAt(i).translationX = cellSize.toFloat()
-            getChildAt(i).translationY = cellSize * 2f
-        }
-    }
-
-    private fun digitCells(digit: Int): List<Pair<Int, Int>> {
-        val grid = when (digit) {
-            0 -> listOf(
-                "111", "101", "101", "101", "111",
-            )
-            1 -> listOf(
-                "001", "001", "001", "001", "001",
-            )
-            2 -> listOf(
-                "111", "001", "111", "100", "111",
-            )
-            3 -> listOf(
-                "111", "001", "111", "001", "111",
-            )
-            4 -> listOf(
-                "101", "101", "111", "001", "001",
-            )
-            5 -> listOf(
-                "111", "100", "111", "001", "111",
-            )
-            6 -> listOf(
-                "111", "100", "111", "101", "111",
-            )
-            7 -> listOf(
-                "111", "001", "001", "001", "001",
-            )
-            8 -> listOf(
-                "111", "101", "111", "101", "111",
-            )
-            else -> listOf(
-                "111", "101", "111", "001", "111",
-            )
-        }
-        val cells = ArrayList<Pair<Int, Int>>()
-        grid.forEachIndexed { row, line ->
-            line.forEachIndexed { col, ch ->
-                if (ch == '1') cells.add(col to row)
-            }
-        }
-        return cells
-    }
-
-    private fun place(digit: Int) {
-        val cells = digitCells(digit)
-        for (i in 0 until childCount) {
-            val view = getChildAt(i)
-            view.animate().cancel()
-            view.scaleX = 1f
-            view.scaleY = 1f
-            view.alpha = 1f
-            if (i < cells.size) {
-                view.translationX = (cells[i].first * cellSize).toFloat()
-                view.translationY = (cells[i].second * cellSize).toFloat()
-            } else {
-                view.alpha = 0f
-                view.translationX = 0f
-                view.translationY = -cellSize.toFloat()
-            }
-        }
-    }
-
-    private fun placeAnimated(digit: Int) {
-        val cells = digitCells(digit)
-        for (i in 0 until childCount) {
-            val view = getChildAt(i)
-            val delayBase = if (isDecMin) 200L else 0L
-            val delay = if (isHour) 500L else delayBase
-            view.animate().setDuration(300L).setStartDelay(delay)
-            if (i < cells.size) {
-                view.alpha = 1f
-                view.translationX = (cells[i].first * cellSize).toFloat()
-                view.translationY = (cells[i].second * cellSize).toFloat()
-            } else {
-                view.alpha = 0f
-                view.translationX = 0f
-                view.translationY = -cellSize.toFloat()
-            }
-        }
-    }
+    private var glyph: List<String> = masks[0]!!
 
     fun setValue(value: Int) {
         currentValue = value % 10
-        if (animateChanges) placeAnimated(currentValue) else place(currentValue)
+        glyph = masks[currentValue] ?: masks[0]!!
+        invalidate()
     }
 
     fun setTextColor(color: Int) {
-        for (i in 0 until childCount) getChildAt(i).setBackgroundColor(color)
+        paint.color = color
+        invalidate()
     }
 
     fun setSizeMultiplier(value: Int) {
         multiplier = value
         cellSize = (value * resources.displayMetrics.density).roundToInt()
-        val lp = LayoutParams(cellSize, cellSize).apply { gravity = Gravity.START or Gravity.TOP }
-        for (i in 0 until childCount) getChildAt(i).layoutParams = lp
-        layoutParams?.let {
-            it.width = cellSize * 3
-            it.height = cellSize * 5
-            layoutParams = it
-        }
         requestLayout()
-        place(currentValue)
+        invalidate()
     }
 
     fun setAnimate(value: Boolean) {
@@ -161,10 +71,31 @@ class SquareNumber @JvmOverloads constructor(
     fun getSize(): Int = cellSize
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        layoutParams?.let {
-            it.width = cellSize * 3
-            it.height = cellSize * 5
+        val width = resolveSize(cellSize * 3, widthMeasureSpec)
+        val height = resolveSize((cellSize * 5 * CELL_ASPECT).toInt(), heightMeasureSpec)
+        setMeasuredDimension(width, height)
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val cellW = width / 3f - CELL_GAP
+        val cellH = cellW * CELL_ASPECT
+        val radius = cellW * 0.14f
+        val offsetX = (width - cellW * 3 - CELL_GAP * 2) / 2f
+        val offsetY = (height - cellH * glyph.size - CELL_GAP * (glyph.size - 1)) / 2f
+        glyph.forEachIndexed { row, line ->
+            line.forEachIndexed { col, ch ->
+                if (ch == '1') {
+                    val left = offsetX + col * (cellW + CELL_GAP)
+                    val top = offsetY + row * (cellH + CELL_GAP)
+                    canvas.drawRoundRect(left, top, left + cellW, top + cellH, radius, radius, paint)
+                }
+            }
         }
+    }
+
+    private companion object {
+        const val CELL_ASPECT = 0.43f
+        const val CELL_GAP = 2f
     }
 }
