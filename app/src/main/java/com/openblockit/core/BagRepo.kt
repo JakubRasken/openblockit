@@ -152,6 +152,16 @@ object BagRepo {
         Prefs.setBagSlots(bag, slots)
     }
 
+    fun setApp(bag: Int, index: Int, pkg: String?) {
+        val slots = Prefs.bagSlots(bag)
+        if (pkg != null) {
+            val existing = slots.indexOf(pkg)
+            if (existing >= 0 && existing != index) slots[existing] = ""
+        }
+        if (index in slots.indices) slots[index] = pkg ?: ""
+        Prefs.setBagSlots(bag, slots)
+    }
+
     fun installedApps(): List<AppEntry> {
         val pm = appContext.packageManager
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)

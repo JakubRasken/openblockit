@@ -6,6 +6,7 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 import com.openblockit.R
+import kotlin.math.roundToInt
 
 class TileDisplay @JvmOverloads constructor(
     context: Context,
@@ -17,6 +18,7 @@ class TileDisplay @JvmOverloads constructor(
         color = context.getColor(R.color.colorOnSurface)
     }
     private var text: String = ""
+    private var bars: FloatArray? = null
     private var tileColor: Int = context.getColor(R.color.colorOnSurface)
     private var contentGravity: Int = 17
 
@@ -41,6 +43,11 @@ class TileDisplay @JvmOverloads constructor(
         invalidate()
     }
 
+    fun setBars(values: FloatArray) {
+        bars = values
+        invalidate()
+    }
+
     fun setTime(hours: Int, minutes: Int) {
         text = "%02d:%02d".format(hours, minutes)
         invalidate()
@@ -48,6 +55,11 @@ class TileDisplay @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        val values = bars
+        if (values != null) {
+            drawBars(canvas, values)
+            return
+        }
         if (text.isEmpty()) return
         val rows = 6
         val glyphs = text.uppercase().map { GLYPHS[it] ?: GLYPHS[' ']!! }
@@ -73,6 +85,52 @@ class TileDisplay @JvmOverloads constructor(
             val glyphWidth = rowsMask.first().length
             x += glyphWidth * tile + (glyphWidth - 1) * gap
             if (index != glyphs.lastIndex) x += tile + gap
+        }
+    }
+
+    private fun drawBars(canvas: Canvas, values: FloatArray) {
+        if (values.isEmpty() || width == 0 || height == 0) return
+        val columns = values.size
+        val columnWidth = width.toFloat() / columns
+        val tile = columnWidth * 0.62f
+        val gap = tile * 0.16f
+        val rulerY = height - tile * 0.5f
+        val baseline = rulerY - tile * 0.5f
+        val maxValue = values.max().coerceAtLeast(1f)
+        val usable = baseline - height * 0.08f
+        val steps = (usable / (tile + gap)).toInt().coerceAtLeast(1)
+
+        for (i in 0 until columns) {
+            val centerX = columnWidth * i + columnWidth / 2f
+            canvas.drawRoundRect(
+                centerX - tile / 2f,
+                rulerY - tile * 0.16f,
+                centerX + tile / 2f,
+                rulerY + tile * 0.16f,
+                tile * 0.16f,
+                tile * 0.16f,
+                paint,
+            )
+        }
+
+        for (i in 0 until columns) {
+            val filled = ((values[i] / maxValue) * steps).roundToInt().coerceIn(0, steps)
+            if (filled == 0) continue
+            val centerX = columnWidth * i + columnWidth / 2f
+            for (row in 0 until filled) {
+                val bottom = baseline - row * (tile + gap)
+                val top = bottom - tile
+                if (top < 0f) break
+                canvas.drawRoundRect(
+                    centerX - tile / 2f,
+                    top,
+                    centerX + tile / 2f,
+                    bottom,
+                    tile * 0.18f,
+                    tile * 0.18f,
+                    paint,
+                )
+            }
         }
     }
 

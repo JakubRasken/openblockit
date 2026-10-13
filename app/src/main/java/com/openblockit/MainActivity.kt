@@ -10,9 +10,14 @@ import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.animation.LinearInterpolator
 import android.view.animation.PathInterpolator
+import android.widget.BaseAdapter
+import android.widget.EditText
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -28,12 +33,14 @@ import com.openblockit.core.TowerRepo
 import com.openblockit.core.endTimeLabel
 import com.openblockit.core.formatDurationMinutes
 import com.openblockit.session.RoutineScheduler
+import it.mirko.widget.HapticBuyTile
 import it.mirko.widget.BagTiles
 import it.mirko.widget.DayFaders
 import it.mirko.widget.HapticPreset
 import it.mirko.widget.HapticSlider
 import it.mirko.widget.PowerTiles
 import it.mirko.widget.RombiKnob
+import it.mirko.widget.RotaryWheel
 import it.mirko.widget.SledSwitch
 import it.mirko.widget.SlideToStart
 import it.mirko.widget.SquareContainer
@@ -65,6 +72,9 @@ class MainActivity : AppCompatActivity() {
 
     private val handler = Handler(Looper.getMainLooper())
     private var selectedMinutes = 30
+    private var statsMode = 1
+    private var statsOffset = 0
+    private var statsSelection = -1
     private var blockMode = false
     private var extendedMinutes = 0
 
@@ -459,6 +469,13 @@ class MainActivity : AppCompatActivity() {
             screen.layoutParams = it
         }
         findViewById<View?>(R.id.homeFrame)?.setPadding(0, dp(48), 0, dp(128))
+        findViewById<View?>(R.id.sharableContent)?.let { content ->
+            (content.layoutParams as? android.widget.LinearLayout.LayoutParams)?.let { params ->
+                params.weight = 0f
+                params.height = dp(177)
+                content.layoutParams = params
+            }
+        }
     }
 
     private fun adjustTimerSize(glass: View) {
@@ -652,7 +669,10 @@ class MainActivity : AppCompatActivity() {
             week.activeDays = routine.days
             week.onDayToggled = { day ->
                 val days = if (routine.days.contains(day)) routine.days - day else routine.days + day
-                if (days.isNotEmpty()) persistRoutine(routine.copy(days = days))
+                if (days.isNotEmpty()) {
+                    week.setDayActive(day, days.contains(day))
+                    persistRoutine(routine.copy(days = days))
+                }
             }
         }
 
@@ -680,6 +700,23 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<TextView>(R.id.routineDurationValue).text = formatDurationMinutes(routine.minutes)
         findViewById<TextView>(R.id.controlChuteCount).text = Prefs.parachuteCount.toString()
+        val armedColor = getColor(R.color.colorOnSurface)
+        val idleColor = (getColor(R.color.colorOnSurfaceVariant) and 0x00FFFFFF) or (0x9E shl 24)
+        val digitColor = if (routine.enabled) armedColor else idleColor
+        findViewById<TileDisplay>(R.id.controlStartDigits).setTileColor(digitColor)
+        findViewById<TileDisplay>(R.id.controlEndDigits).setTileColor(digitColor)
+        findViewById<View>(R.id.controlWeek).alpha = if (routine.enabled) 1f else 0.55f
+        findViewById<View>(R.id.routineTabRow).alpha = 1f
+        findViewById<View>(R.id.controlTimeline).alpha = if (routine.enabled) 1f else 0.55f
+        findViewById<View>(R.id.controlChuteInfo).setOnClickListener { showChuteInfo() }
+    }
+
+    private fun showChuteInfo() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.parachute_info_title)
+            .setMessage(R.string.parachute_info_desc)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun persistRoutine(routine: Routine) {
@@ -708,38 +745,240 @@ class MainActivity : AppCompatActivity() {
 
         val slotIds = listOf(R.id.bagSlot0, R.id.bagSlot1, R.id.bagSlot2, R.id.bagSlot3, R.id.bagSlot4, R.id.bagSlot5)
         val iconIds = listOf(R.id.bagIcon0, R.id.bagIcon1, R.id.bagIcon2, R.id.bagIcon3, R.id.bagIcon4, R.id.bagIcon5)
-        val apps = BagRepo.appsIn(Prefs.activeBag)
+        val slots = Prefs.bagSlots(Prefs.activeBag)
         slotIds.forEachIndexed { index, slotId ->
-            val pkg = apps.getOrNull(index)
+            val pkg = slots.getOrNull(index)?.takeIf { it.isNotEmpty() }
             val icon = findViewById<ImageView>(iconIds[index])
-            icon.setImageDrawable(if (pkg != null) BagRepo.iconFor(pkg) else null)
-            findViewById<View>(slotId).setOnClickListener { showAppPicker(Prefs.activeBag) }
+            if (pkg != null) {
+                icon.setImageDrawable(BagRepo.iconFor(pkg))
+                icon.imageTintList = null
+                icon.alpha = 1f
+            } else {
+                icon.setImageResource(R.drawable.ic_add)
+                icon.imageTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.colorOnSurface))
+                icon.alpha = 1f
+            }
+            findViewById<View>(slotId).setOnClickListener { showAppPicker(Prefs.activeBag, index) }
         }
     }
 
-    private fun showAppPicker(bag: Int) {
-        val apps = BagRepo.installedApps()
-        if (apps.isEmpty()) return
-        val labels = apps.map { it.label }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle(R.string.bag_picker_title)
-            .setItems(labels) { _, which ->
-                BagRepo.addApp(bag, apps[which].packageName)
-                bindBag()
-                bindValigia()
+    private fun showAppPicker(bag: Int, slot: Int) {
+        val installed = BagRepo.installedApps()
+        if (installed.isEmpty()) return
+        val density = resources.displayMetrics.density
+        fun dp(value: Int) = (value * density).toInt()
+
+        val sheet = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(20), dp(20), dp(20))
+            setBackgroundColor(getColor(R.color.colorSurface))
+        }
+        root.addView(TextView(this).apply {
+            text = getString(R.string.bag_picker_title)
+            setTextColor(getColor(R.color.colorOnSurface))
+            textSize = 20f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        })
+
+        val current = Prefs.bagSlots(bag).getOrNull(slot)?.takeIf { it.isNotEmpty() }
+        if (current != null) {
+            root.addView(com.google.android.material.button.MaterialButton(this).apply {
+                text = getString(R.string.bag_empty_slot)
+                setOnClickListener {
+                    BagRepo.setApp(bag, slot, null)
+                    sheet.dismiss()
+                    bindBag()
+                    bindValigia()
+                }
+            }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(12) })
+        }
+
+        val search = EditText(this).apply {
+            hint = getString(R.string.bag_search_hint)
+            setTextColor(getColor(R.color.colorOnSurface))
+            setHintTextColor(getColor(R.color.colorOnSurfaceVariant))
+        }
+        root.addView(search, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })
+
+        val list = ListView(this)
+        root.addView(list, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(380)))
+
+        val rows = installed.toMutableList()
+        val adapter = object : BaseAdapter() {
+            override fun getCount() = rows.size
+            override fun getItem(position: Int) = rows[position]
+            override fun getItemId(position: Int) = position.toLong()
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val entry = rows[position]
+                val row = LinearLayout(this@MainActivity).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = android.view.Gravity.CENTER_VERTICAL
+                    setPadding(dp(8), dp(10), dp(8), dp(10))
+                }
+                row.addView(ImageView(this@MainActivity).apply {
+                    setImageDrawable(BagRepo.iconFor(entry.packageName))
+                }, LinearLayout.LayoutParams(dp(36), dp(36)))
+                row.addView(TextView(this@MainActivity).apply {
+                    text = if (entry.packageName == current) "\u2713  ${entry.label}" else entry.label
+                    setTextColor(getColor(R.color.colorOnSurface))
+                    textSize = 16f
+                    setPadding(dp(14), 0, 0, 0)
+                })
+                return row
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+        }
+        list.adapter = adapter
+        list.setOnItemClickListener { _, _, position, _ ->
+            BagRepo.setApp(bag, slot, rows[position].packageName)
+            sheet.dismiss()
+            bindBag()
+            bindValigia()
+        }
+        search.addTextChangedListener(object : android.text.TextWatcher {
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val query = s?.toString()?.trim().orEmpty()
+                rows.clear()
+                rows.addAll(installed.filter { query.isEmpty() || it.label.contains(query, true) })
+                adapter.notifyDataSetChanged()
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+        })
+
+        sheet.setContentView(root)
+        sheet.show()
     }
 
     private fun bindStats() {
+        val modeTiles = listOf(R.id.statsModeDay, R.id.statsModeMonth, R.id.statsModeYear)
+        val modeLabels = listOf(R.string.stats_mode_day, R.string.stats_mode_month, R.string.stats_mode_year)
+        modeTiles.forEachIndexed { index, id ->
+            findViewById<HapticBuyTile>(id).apply {
+                setSingleText(getString(modeLabels[index]))
+                setActive(index == statsMode)
+                setOnClickListener {
+                    if (statsMode != index) {
+                        statsMode = index
+                        statsOffset = 0
+                        statsSelection = -1
+                        bindStats()
+                    }
+                }
+            }
+        }
+        findViewById<View>(R.id.statsPrev).setOnClickListener {
+            statsOffset -= 1
+            statsSelection = -1
+            bindStats()
+        }
+        findViewById<View>(R.id.statsNext).setOnClickListener {
+            if (statsOffset < 0) {
+                statsOffset += 1
+                statsSelection = -1
+                bindStats()
+            }
+        }
+        findViewById<View>(R.id.statsNext).alpha = if (statsOffset < 0) 1f else 0.4f
+        findViewById<View>(R.id.statsPrev).alpha = 1f
+
         lifecycleScope.launch {
             val days = runCatching { StatsRepo.allDays() }.getOrDefault(emptyList())
-            val last = (0 until 14).map { Clock.dayKey(System.currentTimeMillis() - it * 86_400_000L) }.reversed()
-            val values = last.map { key -> (days.firstOrNull { it.date == key }?.minutes ?: 0).toFloat() }
-            findViewById<StatisticsGraph>(R.id.statisticsGraph).values = values
-            val todayMinutes = days.firstOrNull { it.date == Clock.todayKey() }?.minutes ?: 0
-            findViewById<TileDisplay>(R.id.statsDisplay).setTime(todayMinutes / 60, todayMinutes % 60)
+            val byDate = days.associateBy { it.date }
+            val calendar = java.util.Calendar.getInstance()
+            val locale = resources.configuration.locales.get(0) ?: java.util.Locale.getDefault()
+
+            val bars: FloatArray
+            val periodLabel: String
+            val caption: String
+
+            when (statsMode) {
+                0 -> {
+                    calendar.add(java.util.Calendar.DAY_OF_YEAR, statsOffset)
+                    val key = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(calendar.time)
+                    val minutes = byDate[key]?.minutes ?: 0
+                    bars = floatArrayOf(minutes.toFloat())
+                    val weekday = java.text.SimpleDateFormat("EEEE", locale).format(calendar.time)
+                    val dayNumber = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+                    periodLabel = if (statsOffset == 0) getString(R.string.stats_today)
+                    else if (statsOffset == -1) getString(R.string.stats_yesterday)
+                    else "$weekday $dayNumber".uppercase(locale)
+                    caption = "$weekday $dayNumber".uppercase(locale)
+                }
+                1 -> {
+                    calendar.add(java.util.Calendar.MONTH, statsOffset)
+                    val daysInMonth = calendar.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
+                    bars = FloatArray(daysInMonth)
+                    for (day in 1..daysInMonth) {
+                        calendar.set(java.util.Calendar.DAY_OF_MONTH, day)
+                        val key = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(calendar.time)
+                        bars[day - 1] = (byDate[key]?.minutes ?: 0).toFloat()
+                    }
+                    periodLabel = java.text.SimpleDateFormat("d. MMMM yyyy", locale)
+                        .format(calendar.time).substringAfter(' ').uppercase(locale)
+                    caption = java.text.SimpleDateFormat("d. MMMM yyyy", locale)
+                        .format(calendar.time).uppercase(locale)
+                }
+                else -> {
+                    calendar.add(java.util.Calendar.YEAR, statsOffset)
+                    val year = calendar.get(java.util.Calendar.YEAR)
+                    bars = FloatArray(12)
+                    for (month in 0 until 12) {
+                        var total = 0
+                        for (day in days) {
+                            if (day.date.startsWith("%04d-%02d".format(year, month + 1))) total += day.minutes
+                        }
+                        bars[month] = total.toFloat()
+                    }
+                    periodLabel = year.toString()
+                    caption = year.toString()
+                }
+            }
+
+            val total = bars.sum().toInt()
+            findViewById<TextView>(R.id.statsPeriodValue).text = periodLabel
+            findViewById<TileDisplay>(R.id.statsDisplay).setBars(bars)
+
+            fun labelFor(index: Int): String {
+                if (index !in bars.indices) return caption
+                val cal = calendar.clone() as java.util.Calendar
+                return when (statsMode) {
+                    0 -> java.text.SimpleDateFormat("EEEE d", locale).format(cal.time)
+                    1 -> {
+                        cal.set(java.util.Calendar.DAY_OF_MONTH, index + 1)
+                        java.text.SimpleDateFormat("EEEE d", locale).format(cal.time)
+                    }
+                    else -> {
+                        cal.set(java.util.Calendar.MONTH, index)
+                        cal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+                        java.text.SimpleDateFormat("LLLL", locale).format(cal.time)
+                    }
+                }.uppercase(locale)
+            }
+
+            fun showSelection(index: Int) {
+                findViewById<TextView>(R.id.statsPeriodOut).text =
+                    "${labelFor(index)}  ·  ${bars[index].toInt()} MIN"
+            }
+
+            val today = java.util.Calendar.getInstance()
+            val defaultSelection = when (statsMode) {
+                0 -> 0
+                1 -> today.get(java.util.Calendar.DAY_OF_MONTH) - 1
+                else -> today.get(java.util.Calendar.MONTH)
+            }
+            val selection = (if (statsSelection in bars.indices) statsSelection else defaultSelection)
+                .coerceIn(0, bars.size - 1)
+
+            findViewById<RotaryWheel>(R.id.statsRotary).let { wheel ->
+                wheel.setBars(bars.size, selection, bars.size - 1)
+                wheel.onBarSelected = { index ->
+                    statsSelection = index
+                    showSelection(index)
+                }
+            }
+            showSelection(selection)
         }
     }
 
