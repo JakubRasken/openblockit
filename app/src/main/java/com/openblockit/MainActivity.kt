@@ -5,6 +5,7 @@ import android.animation.ValueAnimator
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -92,6 +93,9 @@ class MainActivity : AppCompatActivity() {
 
     private val extendHoldAnimator by lazy { ValueAnimator.ofFloat(0f, 1f) }
 
+    private val notificationPermission =
+        registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!Prefs.onboardingDone) {
@@ -99,6 +103,7 @@ class MainActivity : AppCompatActivity() {
             finish()
             return
         }
+        requestNotificationPermission()
         setContentView(R.layout._activity_home)
         if (Prefs.lastMinutes < 5) Prefs.lastMinutes = 30
         selectedMinutes = Prefs.lastMinutes.coerceIn(5, 720)
@@ -709,6 +714,13 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.routineTabRow).alpha = 1f
         findViewById<View>(R.id.controlTimeline).alpha = if (routine.enabled) 1f else 0.55f
         findViewById<View>(R.id.controlChuteInfo).setOnClickListener { showChuteInfo() }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < 33) return
+        val granted = checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (!granted) notificationPermission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
     }
 
     private fun showChuteInfo() {

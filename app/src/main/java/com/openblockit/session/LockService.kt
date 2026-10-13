@@ -69,7 +69,7 @@ class LockService : Service() {
         val notification = Notifications.countdown(this, SessionManager.secondsRemaining(), Prefs.endOfLockMillis)
         return try {
             if (Build.VERSION.SDK_INT >= 34) {
-                startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED)
+                startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
             } else {
                 startForeground(1, notification)
             }

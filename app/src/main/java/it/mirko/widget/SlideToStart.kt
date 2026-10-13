@@ -117,7 +117,7 @@ class SlideToStart @JvmOverloads constructor(
     private fun progress(): Float {
         val max = maxOffset()
         if (max <= 0f) return 0f
-        return 1f - (handle.translationX / max)
+        return (handle.translationX / max).coerceIn(0f, 1f)
     }
 
     private fun applyProgress(p: Float) {
