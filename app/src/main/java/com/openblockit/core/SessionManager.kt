@@ -107,18 +107,20 @@ object SessionManager {
         val now = SystemClock.uptimeMillis()
         if (now - lastTickAt < 900L) return
         lastTickAt = now
-        if (!started()) {
+        val end = Prefs.endOfLockMillis
+        val start = Prefs.startOfLockMillis
+        if (end <= 0L) {
             if (_active.value) finish(completed = false, silent = true)
+            return
+        }
+        if (System.currentTimeMillis() >= end) {
+            finish(completed = start > 0L)
             return
         }
         StatsRepo.flushLockedTime(System.currentTimeMillis())
         val left = secondsRemaining()
         _secondsLeft.value = left
         if (abs(Prefs.secondsToEnd - left) > 2) Prefs.secondsToEnd = left
-        if (left <= 0) {
-            finish(completed = true)
-            return
-        }
         acquireWakeLock(left + 2)
         pushNotification(force = false)
         Sounds.update(left)

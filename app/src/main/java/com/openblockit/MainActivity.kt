@@ -120,6 +120,16 @@ open class MainActivity : AppCompatActivity() {
         renderCustom()
         if (SessionManager.started()) enterBlockMode(animate = false)
         if (intent?.getBooleanExtra("completed", false) == true) showCompletion()
+        maybeAskForBatteryExemption()
+        lifecycleScope.launch {
+            SessionManager.active.collect { active ->
+                if (active && !blockMode) {
+                    enterBlockMode(animate = false)
+                } else if (!active && blockMode) {
+                    if (hostsBlockScreen()) finish() else exitBlockMode(animate = false)
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -673,6 +683,8 @@ open class MainActivity : AppCompatActivity() {
                 if (checked && Prefs.parachuteCount < 1) {
                     Toast.makeText(this, R.string.parachute_required_routine, Toast.LENGTH_LONG).show()
                     sled.setCheckedAnimated(false, false)
+                } else if (checked && needsExactAlarmPermission()) {
+                    askForExactAlarms(sled, routine)
                 } else {
                     persistRoutine(routine.copy(enabled = checked))
                 }
@@ -723,6 +735,41 @@ open class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.routineTabRow).alpha = 1f
         findViewById<View>(R.id.controlTimeline).alpha = if (routine.enabled) 1f else 0.55f
         findViewById<View>(R.id.controlChuteInfo).setOnClickListener { showChuteInfo() }
+    }
+
+    private fun needsExactAlarmPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < 31) return false
+        val am = getSystemService(android.app.AlarmManager::class.java) ?: return false
+        return !am.canScheduleExactAlarms()
+    }
+
+    private fun askForExactAlarms(sled: it.mirko.widget.SledSwitch, routine: Routine) {
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.routine_sheet_title)
+            .setMessage(R.string.routine_sheet_body)
+            .setPositiveButton(R.string.routine_sheet_confirm) { _, _ ->
+                persistRoutine(routine.copy(enabled = true))
+                com.openblockit.core.Permissions.openAlarms(this)
+            }
+            .setNegativeButton(R.string.routine_sheet_cancel) { _, _ ->
+                sled.setCheckedAnimated(false, false)
+            }
+            .setOnCancelListener { sled.setCheckedAnimated(false, false) }
+            .show()
+    }
+
+    private fun maybeAskForBatteryExemption() {
+        if (Prefs.main.getBoolean("battery_prompt_done", false)) return
+        if (com.openblockit.core.BatteryUtils.ignoreRequested(this)) return
+        Prefs.main.edit().putBoolean("battery_prompt_done", true).apply()
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.battery_prompt_title)
+            .setMessage(getString(R.string.battery_prompt_desc))
+            .setPositiveButton(R.string.notification_protection_stuck_action) { _, _ ->
+                com.openblockit.core.Permissions.openBattery(this)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun requestNotificationPermission() {
