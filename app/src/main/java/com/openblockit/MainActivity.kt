@@ -144,13 +144,40 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.streakBadge).visibility = View.VISIBLE
         findViewById<TextView>(R.id.toolbarChuteCount).text = Prefs.parachuteCount.toString()
         findViewById<View>(R.id.toolbarChutePill).setOnClickListener { selectSection(3) }
-        findViewById<View>(R.id.profileButton).setOnClickListener {
-            startActivity(Intent(this, OnboardingActivity::class.java))
-        }
         lifecycleScope.launch {
-            val streak = runCatching { StatsRepo.allDays() }.getOrDefault(emptyList()).let { TowerRepo.currentStreak(it) }
+            val days = runCatching { StatsRepo.allDays() }.getOrDefault(emptyList())
+            val streak = TowerRepo.currentStreak(days)
+            val earned = runCatching { StatsRepo.sessionsOn(TodayKey()) }.getOrDefault(0) > 0
             findViewById<TextView>(R.id.streakCount).text = streak.toString()
+            styleStreakTile(earned, streak)
         }
+    }
+
+    private fun styleStreakTile(earned: Boolean, streak: Int) {
+        val tile = findViewById<View>(R.id.streakTile)
+        val active = getColor(R.color.colorPrimaryContainer)
+        val idle = getColor(R.color.colorOnSurfaceVariant)
+        tile.alpha = if (earned) 1f else 0.55f
+        tile.backgroundTintList = android.content.res.ColorStateList.valueOf(if (earned) active else idle)
+        val evening = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) >= 19
+        if (!earned && streak > 0 && evening) {
+            val evaluator = android.animation.ArgbEvaluator()
+            android.animation.ValueAnimator.ofFloat(0f, 1f, 0f).apply {
+                duration = 1800L
+                repeatCount = android.animation.ValueAnimator.INFINITE
+                addUpdateListener { anim ->
+                    val fraction = anim.animatedValue as Float
+                    tile.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                        evaluator.evaluate(fraction, idle, active) as Int,
+                    )
+                }
+                start()
+            }
+        }
+    }
+
+    private fun TodayKey(): String {
+        return java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
     }
 
     private fun bindSession() {

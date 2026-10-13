@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import kotlin.math.roundToInt
@@ -120,7 +119,6 @@ class SquareNumber @JvmOverloads constructor(
 
     private fun glyphPath(originX: Float, originY: Float, cell: Float): android.graphics.Path {
         val path = android.graphics.Path()
-        val radius = cell * 0.22f
 
         fun rect(x1: Int, y1: Int, x2: Int, y2: Int) {
             val piece = android.graphics.Path()
@@ -134,23 +132,12 @@ class SquareNumber @JvmOverloads constructor(
             path.op(piece, android.graphics.Path.Op.UNION)
         }
 
-        fun rounded(x1: Int, y1: Int, x2: Int, y2: Int) {
-            val piece = android.graphics.Path()
-            piece.addRoundRect(
-                RectF(originX + x1 * cell, originY + y1 * cell, originX + x2 * cell, originY + y2 * cell),
-                radius,
-                radius,
-                android.graphics.Path.Direction.CW,
-            )
-            path.op(piece, android.graphics.Path.Op.UNION)
-        }
-
         glyph.forEach { segment ->
             val x1 = segment[0].toInt()
             val y1 = segment[1].toInt()
             val x2 = segment[2].toInt()
             val y2 = segment[3].toInt()
-            if (y1 == y2) rounded(0, y1, 3, y1 + 1) else rounded(x1, y1, x1 + 1, y2)
+            if (y1 == y2) rect(0, y1, 3, y1 + 1) else rect(x1, y1, x1 + 1, y2)
         }
 
         holes[currentValue]?.forEach { hole ->
