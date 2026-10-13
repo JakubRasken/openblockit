@@ -75,6 +75,7 @@ object AccessibilityUtils {
 object UsageUtils {
     fun lastForegroundPackage(context: Context): String? {
         return try {
+            if (!Permissions.usageGranted(context)) return null
             val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as? android.app.usage.UsageStatsManager
                 ?: return null
             val now = System.currentTimeMillis()

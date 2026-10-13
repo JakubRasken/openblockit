@@ -160,7 +160,7 @@
 
         <receiver
             android:name=".widget.PresetWidget"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/widget_preset_title">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -172,7 +172,7 @@
 
         <receiver
             android:name=".widget.StreakWidget"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/widget_streak_title">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

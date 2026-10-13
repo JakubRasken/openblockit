@@ -516,7 +516,24 @@ open class MainActivity : AppCompatActivity() {
         findViewById<SquareNumber>(R.id.secRight).setSizeMultiplier(10)
     }
 
+    private fun enforcementLive(): Boolean = com.openblockit.core.AccessibilityUtils.enabled(this)
+
     private fun startSession() {
+        if (!enforcementLive()) {
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.accessibility_stuck_title)
+                .setMessage(R.string.accessibility_stuck_message)
+                .setPositiveButton(R.string.accessibility_stuck_open) { _, _ ->
+                    com.openblockit.core.Permissions.openAccessibility(this)
+                }
+                .setNegativeButton(R.string.accessibility_stuck_start_anyway) { _, _ -> startSessionNow() }
+                .show()
+            return
+        }
+        startSessionNow()
+    }
+
+    private fun startSessionNow() {
         when (SessionManager.start(selectedMinutes)) {
             StartResult.Started -> enterBlockMode(animate = true)
             StartResult.AlreadyRunning -> enterBlockMode(animate = false)
