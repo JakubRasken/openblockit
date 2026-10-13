@@ -16,6 +16,9 @@ import kotlinx.coroutines.launch
 class OpenBlockitApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+            androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES,
+        )
         Prefs.init(this)
         StatsRepo.init(this)
         BagRepo.init(this)

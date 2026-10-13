@@ -53,7 +53,7 @@ import it.mirko.widget.numbers.SquareNumber
 import it.mirko.widget.stats.StatisticsGraph
 import kotlinx.coroutines.launch
 
-class MainActivity : AppCompatActivity() {
+open class MainActivity : AppCompatActivity() {
 
     private lateinit var root: SwipeSections
     private lateinit var nav: AltNavigationBar
@@ -77,6 +77,7 @@ class MainActivity : AppCompatActivity() {
     private var statsOffset = 0
     private var statsSelection = -1
     private var blockMode = false
+    private var streakPulse: android.animation.ValueAnimator? = null
     private var extendedMinutes = 0
 
     private val standard = PathInterpolator(0.2f, 0f, 0f, 1f)
@@ -105,8 +106,7 @@ class MainActivity : AppCompatActivity() {
         }
         requestNotificationPermission()
         setContentView(R.layout._activity_home)
-        if (Prefs.lastMinutes < 5) Prefs.lastMinutes = 30
-        selectedMinutes = Prefs.lastMinutes.coerceIn(5, 720)
+        selectedMinutes = Prefs.lastMinutes.coerceIn(1, 720)
         extendedMinutes = Prefs.main.getInt("extended_minutes", 0)
         hidePremium()
         bindToolbar()
@@ -175,9 +175,11 @@ class MainActivity : AppCompatActivity() {
         tile.alpha = if (earned) 1f else 0.55f
         tile.backgroundTintList = android.content.res.ColorStateList.valueOf(if (earned) active else idle)
         val evening = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) >= 19
+        streakPulse?.cancel()
+        streakPulse = null
         if (!earned && streak > 0 && evening) {
             val evaluator = android.animation.ArgbEvaluator()
-            android.animation.ValueAnimator.ofFloat(0f, 1f, 0f).apply {
+            streakPulse = android.animation.ValueAnimator.ofFloat(0f, 1f, 0f).apply {
                 duration = 1800L
                 repeatCount = android.animation.ValueAnimator.INFINITE
                 addUpdateListener { anim ->
@@ -189,6 +191,13 @@ class MainActivity : AppCompatActivity() {
                 start()
             }
         }
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacks(ticker)
+        streakPulse?.cancel()
+        streakPulse = null
+        super.onDestroy()
     }
 
     private fun TodayKey(): String {
@@ -995,9 +1004,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun confirmParachute() {
-        AlertDialog.Builder(this)
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle(R.string.take_a_parachute)
-            .setMessage(getString(R.string.countdown_parachute_explain))
+            .setMessage(getString(R.string.parachute_info_desc))
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 SessionManager.endByParachute()
                 exitBlockMode(animate = true)
@@ -1006,11 +1015,16 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
+    open fun hostsBlockScreen(): Boolean = false
+
     private fun showCompletion() {
-        AlertDialog.Builder(this)
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle(R.string.complete_session_title)
             .setMessage(getString(R.string.complete_session_desc))
-            .setPositiveButton(R.string.complete_session_completed_action, null)
+            .setPositiveButton(R.string.complete_session_completed_action) { _, _ ->
+                if (hostsBlockScreen()) finish()
+            }
+            .setOnCancelListener { if (hostsBlockScreen()) finish() }
             .show()
     }
 

@@ -77,8 +77,8 @@ class SlideToStart @JvmOverloads constructor(
     private fun applyHintMargins() {
         if (hint.layoutParams is ViewGroup.MarginLayoutParams) {
             (hint.layoutParams as ViewGroup.MarginLayoutParams).apply {
-                leftMargin = if (exitMode) dp(20) else dp(92)
-                rightMargin = if (exitMode) dp(92) else dp(20)
+                leftMargin = dp(92)
+                rightMargin = dp(20)
                 hint.layoutParams = this
             }
         }
