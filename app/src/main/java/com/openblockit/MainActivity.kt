@@ -496,10 +496,26 @@ open class MainActivity : AppCompatActivity() {
         findViewById<View?>(R.id.sharableContent)?.let { content ->
             (content.layoutParams as? android.widget.LinearLayout.LayoutParams)?.let { params ->
                 params.weight = 0f
-                params.height = dp(177)
+                params.height = dp(148)
                 content.layoutParams = params
             }
         }
+        findViewById<View?>(R.id.statsPeriodOut)?.let { caption ->
+            (caption.layoutParams as? android.widget.FrameLayout.LayoutParams)?.let { params ->
+                params.height = dp(26)
+                params.topMargin = dp(6)
+                caption.layoutParams = params
+            }
+            caption.visibility = View.VISIBLE
+            (caption.parent as? View)?.let { frame ->
+                (frame.layoutParams as? android.widget.LinearLayout.LayoutParams)?.let { params ->
+                    params.weight = 0f
+                    params.height = dp(34)
+                    frame.layoutParams = params
+                }
+            }
+        }
+        (findViewById<View?>(R.id.statsSquare) as? SquareContainer)?.setRatio(0.80f)
     }
 
     private fun adjustTimerSize(glass: View) {
@@ -982,8 +998,8 @@ open class MainActivity : AppCompatActivity() {
                 0 -> {
                     calendar.add(java.util.Calendar.DAY_OF_YEAR, statsOffset)
                     val key = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(calendar.time)
-                    val minutes = byDate[key]?.minutes ?: 0
-                    bars = floatArrayOf(minutes.toFloat())
+                    val hourly = runCatching { StatsRepo.hourlyOn(key) }.getOrDefault(IntArray(24))
+                    bars = FloatArray(24) { hour -> hourly[hour].toFloat() }
                     val weekday = java.text.SimpleDateFormat("EEEE", locale).format(calendar.time)
                     val dayNumber = calendar.get(java.util.Calendar.DAY_OF_MONTH)
                     periodLabel = if (statsOffset == 0) getString(R.string.stats_today)
@@ -1029,7 +1045,7 @@ open class MainActivity : AppCompatActivity() {
                 if (index !in bars.indices) return caption
                 val cal = calendar.clone() as java.util.Calendar
                 return when (statsMode) {
-                    0 -> java.text.SimpleDateFormat("EEEE d", locale).format(cal.time)
+                    0 -> "%02d:00".format(index)
                     1 -> {
                         cal.set(java.util.Calendar.DAY_OF_MONTH, index + 1)
                         java.text.SimpleDateFormat("EEEE d", locale).format(cal.time)
@@ -1049,7 +1065,7 @@ open class MainActivity : AppCompatActivity() {
 
             val today = java.util.Calendar.getInstance()
             val defaultSelection = when (statsMode) {
-                0 -> 0
+                0 -> today.get(java.util.Calendar.HOUR_OF_DAY)
                 1 -> today.get(java.util.Calendar.DAY_OF_MONTH) - 1
                 else -> today.get(java.util.Calendar.MONTH)
             }

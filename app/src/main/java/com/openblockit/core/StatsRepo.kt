@@ -24,24 +24,44 @@ object StatsRepo {
         if (delta < 60_000L) return
         val minutes = (delta / 60_000L).toInt().coerceAtMost(1440)
         if (minutes > 0) {
-            addMinutes(Clock.dayKey(loggedUntil), minutes)
+            val hour = java.util.Calendar.getInstance().apply { timeInMillis = loggedUntil }
+                .get(java.util.Calendar.HOUR_OF_DAY)
+            addMinutes(Clock.dayKey(loggedUntil), minutes, hour)
             Prefs.statsLoggedUntil = loggedUntil + minutes * 60_000L
         }
     }
 
-    fun addMinutes(date: String, minutes: Int) {
+    fun addMinutes(date: String, minutes: Int, hour: Int = -1) {
         val ctx = appContext
         AppScope.launch(Dispatchers.IO) {
             val dao = AppDb.get(ctx).days()
             val existing = dao.byDate(date)
+            val buckets = parseHourly(existing?.hourly)
+            if (hour in 0..23) buckets[hour] += minutes
             dao.upsert(
                 DayEntity(
                     date = date,
                     minutes = (existing?.minutes ?: 0) + minutes,
                     sessions = existing?.sessions ?: 0,
+                    hourly = formatHourly(buckets),
                 )
             )
         }
+    }
+
+    fun parseHourly(value: String?): IntArray {
+        val result = IntArray(24)
+        if (value.isNullOrEmpty()) return result
+        value.split(',').forEachIndexed { index, part ->
+            if (index < 24) result[index] = part.toIntOrNull() ?: 0
+        }
+        return result
+    }
+
+    private fun formatHourly(buckets: IntArray): String = buckets.joinToString(",")
+
+    suspend fun hourlyOn(date: String): IntArray = withContext(Dispatchers.IO) {
+        parseHourly(AppDb.get(appContext).days().byDate(date)?.hourly)
     }
 
     fun completeSession(completed: Boolean) {
@@ -56,6 +76,7 @@ object StatsRepo {
                     date = date,
                     minutes = existing?.minutes ?: 0,
                     sessions = (existing?.sessions ?: 0) + 1,
+                    hourly = existing?.hourly ?: "",
                 )
             )
         }

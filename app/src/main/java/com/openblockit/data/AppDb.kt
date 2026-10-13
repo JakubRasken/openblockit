@@ -16,6 +16,7 @@ data class DayEntity(
     @PrimaryKey val date: String,
     val minutes: Int,
     val sessions: Int,
+    val hourly: String = "",
 )
 
 @Dao
@@ -30,7 +31,7 @@ interface DayDao {
     fun upsert(day: DayEntity)
 }
 
-@Database(entities = [DayEntity::class], version = 1, exportSchema = false)
+@Database(entities = [DayEntity::class], version = 2, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun days(): DayDao
 
@@ -38,13 +39,19 @@ abstract class AppDb : RoomDatabase() {
         @Volatile
         private var instance: AppDb? = null
 
+        private val MIGRATION_1_2 = object : androidx.room.migration.Migration(1, 2) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE days ADD COLUMN hourly TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         fun get(context: Context): AppDb =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     AppDb::class.java,
                     "openblockit.db",
-                ).build().also { instance = it }
+                ).addMigrations(MIGRATION_1_2).build().also { instance = it }
             }
     }
 }
