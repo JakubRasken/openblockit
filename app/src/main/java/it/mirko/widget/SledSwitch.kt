@@ -22,16 +22,17 @@ class SledSwitch @JvmOverloads constructor(
     var onCheckedChange: ((Boolean) -> Unit)? = null
 
     init {
-        val size = dp(34)
+        val knobWidth = dp(30)
+        val knobHeight = dp(44)
         knob.background = GradientDrawable().apply {
-            cornerRadius = size / 2f
+            cornerRadius = dp(10).toFloat()
             setColor(context.getColor(R.color.colorOnSurface))
         }
         addView(
             knob,
-            FrameLayout.LayoutParams(size, size).apply {
+            FrameLayout.LayoutParams(knobWidth, knobHeight).apply {
                 gravity = Gravity.CENTER_VERTICAL or Gravity.START
-                marginStart = dp(6)
+                marginStart = dp(7)
             },
         )
         setOnClickListener {
@@ -64,8 +65,8 @@ class SledSwitch @JvmOverloads constructor(
     }
 
     private fun applyState(animate: Boolean) {
-        val target = if (checkedState) width - dp(40) else dp(6)
-        val alpha = if (checkedState) 1f else 0.4f
+        val target = if (checkedState) width - dp(37) else dp(7)
+        val alpha = if (checkedState) 1f else 0.35f
         knob.animate().cancel()
         if (animate && width > 0) {
             knob.animate().translationX(target.toFloat()).alpha(alpha).setDuration(180L).start()

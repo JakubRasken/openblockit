@@ -13,14 +13,12 @@ class TileDisplay @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : View(context, attrs, defStyleAttr) {
 
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = context.getColor(R.color.colorOnSurface)
+    }
     private var text: String = ""
     private var tileColor: Int = context.getColor(R.color.colorOnSurface)
     private var contentGravity: Int = 17
-
-    init {
-        paint.color = tileColor
-    }
 
     fun setTileColor(color: Int) {
         tileColor = color
@@ -38,22 +36,60 @@ class TileDisplay @JvmOverloads constructor(
         invalidate()
     }
 
+    fun setText(value: String) {
+        text = value
+        invalidate()
+    }
+
+    fun setTime(hours: Int, minutes: Int) {
+        text = "%02d:%02d".format(hours, minutes)
+        invalidate()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val tile = 6f * resources.displayMetrics.density
-        val gap = 2f * resources.displayMetrics.density
-        val columns = 5
-        val rows = 7
-        val totalW = columns * tile + (columns - 1) * gap
-        val totalH = rows * tile + (rows - 1) * gap
-        val startX = (width - totalW) / 2f
-        val startY = (height - totalH) / 2f
-        for (row in 0 until rows) {
-            for (col in 0 until columns) {
-                val x = startX + col * (tile + gap)
-                val y = startY + row * (tile + gap)
-                canvas.drawRoundRect(x, y, x + tile, y + tile, tile * 0.2f, tile * 0.2f, paint)
+        if (text.isEmpty()) return
+        val rows = 6
+        val glyphs = text.uppercase().map { GLYPHS[it] ?: GLYPHS[' ']!! }
+        val columns = glyphs.map { glyph -> glyph.first.first().length }.sum() + (glyphs.size - 1)
+        val tileByHeight = (height * 0.86f) / rows
+        val tileByWidth = (width * 0.94f) / (columns * 1.16f)
+        val tile = minOf(tileByHeight, tileByWidth)
+        val gap = tile * 0.16f
+        val totalWidth = columns * tile + (columns - 1) * gap
+        var x = (width - totalWidth) / 2f
+        val y0 = (height - (rows * tile + (rows - 1) * gap)) / 2f
+        glyphs.forEachIndexed { index, glyph ->
+            val rowsMask = glyph.first
+            rowsMask.forEachIndexed { r, line ->
+                line.forEachIndexed { c, ch ->
+                    if (ch == '1') {
+                        val left = x + c * (tile + gap)
+                        val top = y0 + r * (tile + gap)
+                        canvas.drawRoundRect(left, top, left + tile, top + tile, tile * 0.18f, tile * 0.18f, paint)
+                    }
+                }
             }
+            val glyphWidth = rowsMask.first().length
+            x += glyphWidth * tile + (glyphWidth - 1) * gap
+            if (index != glyphs.lastIndex) x += tile + gap
         }
+    }
+
+    private companion object {
+        val GLYPHS: Map<Char, Pair<List<String>, Boolean>> = mapOf(
+            '0' to (listOf("0110", "1001", "1001", "1001", "1001", "0110") to false),
+            '1' to (listOf("0000", "0010", "0110", "1010", "0010", "0010") to false),
+            '2' to (listOf("0000", "1110", "0001", "0110", "1000", "1111") to false),
+            '3' to (listOf("0000", "1110", "0001", "0111", "0001", "1110") to false),
+            '4' to (listOf("0000", "1001", "1001", "0111", "0001", "0001") to false),
+            '5' to (listOf("0000", "1111", "1000", "1110", "0001", "1110") to false),
+            '6' to (listOf("0000", "0110", "1000", "1110", "1001", "0110") to false),
+            '7' to (listOf("0000", "1110", "0001", "0001", "0001", "0001") to false),
+            '8' to (listOf("0000", "0110", "1001", "0110", "1001", "0110") to false),
+            '9' to (listOf("0000", "1110", "1001", "1111", "0001", "1110") to false),
+            ':' to (listOf("0", "0", "1", "0", "1", "0") to true),
+            ' ' to (listOf("00", "00", "00", "00", "00", "00") to false),
+        )
     }
 }

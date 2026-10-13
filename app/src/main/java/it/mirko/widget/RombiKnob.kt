@@ -14,16 +14,19 @@ class RombiKnob @JvmOverloads constructor(
     defStyleAttr: Int = 0,
 ) : View(context, attrs, defStyleAttr) {
 
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.getColor(R.color.colorPrimaryContainer) }
-    private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val tickPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.colorOnSurface)
-        style = Paint.Style.STROKE
-        strokeWidth = 3f * resources.displayMetrics.density
+        alpha = 90
+        strokeWidth = 3f
+    }
+    private val accentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = context.getColor(R.color.colorPrimaryContainer)
+        strokeWidth = 4f
     }
 
     var value: Int = 0
         private set
-    var maxValue: Int = 100
+    var maxValue: Int = 1440
     var onValueChanged: ((Int) -> Unit)? = null
 
     fun setValue(newValue: Int) {
@@ -31,28 +34,38 @@ class RombiKnob @JvmOverloads constructor(
         invalidate()
     }
 
+    fun setMax(newMax: Int) {
+        maxValue = newMax
+        invalidate()
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val cx = width / 2f
-        val cy = height / 2f
-        val radius = minOf(cx, cy) * 0.86f
-        canvas.drawCircle(cx, cy, radius, ring)
-        val angle = (value / maxValue.toFloat()) * 2f * Math.PI - Math.PI / 2
-        val dx = cx + (radius * 0.72f * kotlin.math.cos(angle)).toFloat()
-        val dy = cy + (radius * 0.72f * kotlin.math.sin(angle)).toFloat()
-        canvas.drawCircle(dx, dy, radius * 0.2f, paint)
+        val count = 24
+        val step = width / count.toFloat()
+        val top = height * 0.22f
+        val bottom = height * 0.78f
+        for (i in 0 until count) {
+            val x = i * step + step / 2f
+            canvas.drawLine(x, top, x, bottom, tickPaint)
+        }
+        val ratio = if (maxValue > 0) value / maxValue.toFloat() else 0f
+        val x = (width * ratio).coerceIn(2f, width - 2f)
+        canvas.drawLine(x, height * 0.08f, x, height * 0.92f, accentPaint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (event.actionMasked == MotionEvent.ACTION_MOVE || event.actionMasked == MotionEvent.ACTION_DOWN) {
-            val delta = event.y - height / 2f
-            val next = ((1f - (delta / (height / 2f))) * maxValue / 2f + value).toInt().coerceIn(0, maxValue)
-            if (next != value) {
-                value = next
-                onValueChanged?.invoke(value)
-                invalidate()
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                val ratio = (event.x / width.toFloat()).coerceIn(0f, 1f)
+                val next = (ratio * maxValue).toInt()
+                if (next != value) {
+                    value = next
+                    onValueChanged?.invoke(value)
+                    invalidate()
+                }
+                return true
             }
-            return true
         }
         return super.onTouchEvent(event)
     }
