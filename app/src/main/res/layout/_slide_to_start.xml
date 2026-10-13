@@ -33,7 +33,7 @@
         android:layout_width="76dp"
         android:layout_height="56dp"
         android:transitionName="session_handle"
-        app:cardBackgroundColor="@color/colorOnSurface"
+        app:cardBackgroundColor="@color/colorPrimaryContainer"
         app:cardCornerRadius="@dimen/small_corner"
         app:cardElevation="0dp"
         style="@style/Widget.Material3.CardView.Filled">
@@ -44,6 +44,6 @@
             android:layout_height="24dp"
             android:src="@drawable/ic_play"
             android:importantForAccessibility="no"
-            app:tint="@color/colorSurface"/>
+            app:tint="@color/colorOnPrimary"/>
     </com.google.android.material.card.MaterialCardView>
 </merge>

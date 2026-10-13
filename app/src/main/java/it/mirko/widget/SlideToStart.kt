@@ -29,6 +29,7 @@ class SlideToStart @JvmOverloads constructor(
     private val argb = ArgbEvaluator()
     private val colorOnSurface = context.getColor(R.color.colorOnSurface)
     private val colorAccent = context.getColor(R.color.colorPrimaryContainer)
+    private val colorOnAccent = context.getColor(R.color.colorOnPrimary)
 
     private val standard = PathInterpolator(0.2f, 0f, 0f, 1f)
     private val emphasized = PathInterpolator(0.05f, 0.7f, 0.1f, 1f)
@@ -103,7 +104,7 @@ class SlideToStart @JvmOverloads constructor(
         hint.alpha = 1f
         applyHintMargins()
         handle.alpha = 1f
-        handle.setCardBackgroundColor(colorOnSurface)
+        handle.setCardBackgroundColor(colorAccent)
     }
 
     fun disarm() {
@@ -121,7 +122,7 @@ class SlideToStart @JvmOverloads constructor(
 
     private fun applyProgress(p: Float) {
         hint.alpha = (1f - 0.55f * p).coerceAtLeast(0.45f)
-        handle.setCardBackgroundColor(argb.evaluate(p, colorOnSurface, colorAccent) as Int)
+        handle.setCardBackgroundColor(colorAccent)
     }
 
     fun reset() {
@@ -132,7 +133,7 @@ class SlideToStart @JvmOverloads constructor(
         handle.animate().translationX(0f).scaleX(1f).scaleY(1f)
             .setDuration(380L).setInterpolator(standard).start()
         hint.animate().alpha(1f).setDuration(200L).start()
-        handle.setCardBackgroundColor(colorOnSurface)
+        handle.setCardBackgroundColor(colorAccent)
         handleIcon.setImageResource(iconRes)
         hint.text = context.getString(hintTextRes)
         applyHintMargins()
@@ -186,7 +187,7 @@ class SlideToStart @JvmOverloads constructor(
                         handle.animate().translationX(0f).setDuration(380L)
                             .setInterpolator(standard).start()
                         hint.animate().alpha(1f).setDuration(200L).start()
-                        handle.setCardBackgroundColor(colorOnSurface)
+                        handle.setCardBackgroundColor(colorAccent)
                     }
                     return true
                 }

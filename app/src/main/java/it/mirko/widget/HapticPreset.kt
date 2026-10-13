@@ -22,6 +22,7 @@ class HapticPreset @JvmOverloads constructor(
         val view = LayoutInflater.from(context).inflate(R.layout._view_preset_layout, this, false)
         numberView = view.findViewById(R.id.presetTextNumber)
         labelView = view.findViewById(R.id.presetTextLabel)
+        numberView.setTextColor(context.getColor(R.color.colorSecondaryContainer))
         addView(view)
     }
 
